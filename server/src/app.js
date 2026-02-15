@@ -2,10 +2,30 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const errorHandler = require('./middlewares/errorHandler');
-const fileRoutes = require("./routes/fileRoutes");
+
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  "https://naval-moters.vercel.app",
+  "http://localhost:3000"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS: " + origin));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.options("*", cors()); // handle preflight
+
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -17,6 +37,7 @@ app.use('/api/salary', require('./routes/salaryRoutes'));
 app.use('/api/masters', require('./routes/masterRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
+
 app.use(errorHandler);
 
 module.exports = app;
