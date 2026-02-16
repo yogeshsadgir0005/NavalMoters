@@ -1,5 +1,12 @@
 const { google } = require("googleapis");
 
+/**
+ * ENV supported:
+ * - GOOGLE_CREDENTIALS_B64   (base64 of the full service account json file)
+ * - GOOGLE_CREDENTIALS_JSON  (raw JSON string, optional)
+ * - GOOGLE_SHEET_ID
+ */
+
 const SPREADSHEET_ID =
   process.env.GOOGLE_SHEET_ID ||
   "1WVoCKLuUaihjSM46_1saFq1nA90dQH3xDHA4urR5uVQ";
