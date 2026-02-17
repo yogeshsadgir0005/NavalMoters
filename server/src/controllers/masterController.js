@@ -16,3 +16,22 @@ exports.addJobProfile = async (req, res) => {
   const item = await JobProfile.create(req.body);
   res.json(item);
 };
+
+// NEW: Delete Controllers
+exports.deleteDepartment = async (req, res) => {
+  try {
+    await Department.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Department deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteJobProfile = async (req, res) => {
+  try {
+    await JobProfile.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Job Profile deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

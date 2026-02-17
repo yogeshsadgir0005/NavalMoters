@@ -31,7 +31,7 @@ const salarySchema = new mongoose.Schema({
   
   netPay: Number,
   
-  status: { type: String, enum: ['Pending', 'In Progress', 'Paid', 'Hold'], default: 'Pending' },
+  status: { type: String, enum: ['Pending', 'In Progress', 'Paid', 'Hold'], default: 'Paid' },
   transactionId: String,
   paidDate: Date
 }, { timestamps: true });

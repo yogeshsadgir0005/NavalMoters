@@ -12,7 +12,7 @@ const checkProfileCompletion = (emp) => {
 
 exports.generateSalary = async (req, res) => {
   const { month, employeeIds } = req.body; 
-  
+   
   try {
     const start = new Date(`${month}-01`);
     const end = new Date(new Date(start).setMonth(start.getMonth() + 1));
@@ -69,7 +69,7 @@ exports.generateSalary = async (req, res) => {
           incentives: 0,
           adjustments: [], // Start with empty history
           netPay,
-          status: 'Pending'
+          status: 'Paid' // <-- BUG FIX: Default status changed to Paid (Completed)
         },
         { upsert: true, new: true }
       ).populate('employee', 'firstName lastName employeeCode');
@@ -104,25 +104,21 @@ exports.updateSalary = async (req, res) => {
   const { netPay, status, adjustments } = req.body;
 
   try {
-    // ✅ Normalize: allow adjustments to be either an array OR a single object
     const adjustmentsArr = Array.isArray(adjustments)
       ? adjustments
       : adjustments && typeof adjustments === 'object'
         ? [adjustments]
         : [];
 
-    // ✅ Sanitize for mongoose sub-schema
     const cleanedAdjustments = adjustmentsArr
       .filter(a => a && typeof a === 'object')
       .map(a => ({
-        // keep _id if provided (helps preserve existing subdoc identity)
         ...(a._id ? { _id: a._id } : {}),
         type: a.type,
         amount: Number(a.amount),
         reason: String(a.reason || ''),
         date: a.date ? new Date(a.date) : new Date()
       }))
-      // avoid saving broken rows
       .filter(a =>
         (a.type === 'Incentive' || a.type === 'Penalty') &&
         Number.isFinite(a.amount) &&
@@ -130,14 +126,12 @@ exports.updateSalary = async (req, res) => {
         a.reason.trim().length > 0
       );
 
-    // 1) Calculate incentives (reporting)
     const totalIncentives = cleanedAdjustments.reduce((acc, curr) => {
       return curr.type === 'Incentive'
         ? acc + curr.amount
         : acc - curr.amount;
     }, 0);
 
-    // 2) Update with full history (array)
     const updatedSalary = await Salary.findByIdAndUpdate(
       id,
       {
@@ -146,7 +140,7 @@ exports.updateSalary = async (req, res) => {
         adjustments: cleanedAdjustments,
         incentives: totalIncentives
       },
-      { new: true, runValidators: true } // ✅ enforce schema validation
+      { new: true, runValidators: true } 
     ).populate('employee', 'firstName lastName employeeCode');
 
     if (!updatedSalary) {
@@ -173,7 +167,6 @@ exports.updateSalary = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 
 exports.getSalaryReports = async (req, res) => {
   try {

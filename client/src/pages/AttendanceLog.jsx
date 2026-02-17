@@ -73,26 +73,31 @@ const AttendanceLog = () => {
     return Array.from({ length: days }, (_, i) => i + 1);
   };
 
-  const getStatus = (empId, day) => {
+  // UPDATED: Now fetches the entire record instead of just the status string
+  const getRecord = (empId, day) => {
     const dateStr = `${selectedMonth}-${String(day).padStart(2, '0')}`;
-    const record = logs.find(l => 
+    return logs.find(l => 
       l.employee?._id === empId && 
       l.date.startsWith(dateStr) 
     );
-    return record ? record.status : '-';
   };
 
   const days = getDaysInMonth();
 
-  const StatusCell = ({ status }) => {
+  // UPDATED: Now checks for `isNightDuty` to apply a dark background theme
+  const StatusCell = ({ record }) => {
+    if (!record) return <div className="text-slate-200 text-[10px] text-center font-light">·</div>;
+
+    const { status, isNightDuty } = record;
+
     if (status === 'Present') return (
-        <div className="w-5 h-5 mx-auto rounded bg-emerald-100 text-emerald-600 flex items-center justify-center text-[9px] font-bold border border-emerald-200">P</div>
+        <div className={`w-5 h-5 mx-auto rounded flex items-center justify-center text-[9px] font-bold border ${isNightDuty ? 'bg-slate-800 text-emerald-400 border-slate-700' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>P</div>
     );
     if (status === 'Absent') return (
-        <div className="w-5 h-5 mx-auto rounded bg-rose-100 text-rose-600 flex items-center justify-center text-[9px] font-bold border border-rose-200">A</div>
+        <div className={`w-5 h-5 mx-auto rounded flex items-center justify-center text-[9px] font-bold border ${isNightDuty ? 'bg-slate-800 text-rose-400 border-slate-700' : 'bg-rose-100 text-rose-600 border-rose-200'}`}>A</div>
     );
     if (status === 'Half Day') return (
-        <div className="w-5 h-5 mx-auto rounded bg-amber-100 text-amber-600 flex items-center justify-center text-[9px] font-bold border border-amber-200">H</div>
+        <div className={`w-5 h-5 mx-auto rounded flex items-center justify-center text-[9px] font-bold border ${isNightDuty ? 'bg-slate-800 text-amber-400 border-slate-700' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>H</div>
     );
     return <div className="text-slate-200 text-[10px] text-center font-light">·</div>;
   };
@@ -134,11 +139,13 @@ const AttendanceLog = () => {
 
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
         
+        {/* UPDATED: Added a Night Duty indicator to the legend */}
         <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center gap-4 text-[10px] font-medium text-slate-500">
             <span className="font-bold text-slate-700 uppercase tracking-wider">Legend:</span>
             <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Present</span>
             <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Absent</span>
             <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Half Day</span>
+            <span className="flex items-center gap-1 ml-2 border-l border-slate-200 pl-4"><span className="w-2.5 h-2.5 rounded-sm bg-slate-800"></span> Night Duty</span>
         </div>
 
         <div className="overflow-x-auto custom-scrollbar">
@@ -192,7 +199,7 @@ const AttendanceLog = () => {
                       
                       {days.map(d => (
                         <td key={d} className="p-0 border-r border-slate-50 text-center align-middle">
-                          <StatusCell status={getStatus(emp._id, d)} />
+                          <StatusCell record={getRecord(emp._id, d)} />
                         </td>
                       ))}
                       

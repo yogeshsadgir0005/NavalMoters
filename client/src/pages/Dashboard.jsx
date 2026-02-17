@@ -24,21 +24,36 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
   const [result, setResult] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [error, setError] = useState(null);
+  const [processedIds, setProcessedIds] = useState([]);
 
   useEffect(() => {
     if (isOpen && employees.length > 0) {
-      setSelectedIds(employees.map(e => e._id));
+      API.get('/salary/history').then(res => {
+         const processed = res.data
+            .filter(s => s.month === month)
+            .map(s => s.employee?._id || s.employee);
+         setProcessedIds(processed);
+         
+         const availableIds = employees.map(e => e._id).filter(id => !processed.includes(id));
+         setSelectedIds(availableIds);
+      }).catch(err => {
+         console.error(err);
+         setSelectedIds(employees.map(e => e._id));
+      });
     }
-  }, [isOpen, employees]);
+  }, [isOpen, month, employees.length]);
 
   if (!isOpen) return null;
 
+  const availableIds = employees.map(e => e._id).filter(id => !processedIds.includes(id));
+
   const toggleSelectAll = () => {
-    if (selectedIds.length === employees.length) setSelectedIds([]);
-    else setSelectedIds(employees.map(e => e._id));
+    if (selectedIds.length === availableIds.length) setSelectedIds([]);
+    else setSelectedIds(availableIds);
   };
 
   const toggleEmployee = (id) => {
+    if (processedIds.includes(id)) return;
     if (selectedIds.includes(id)) setSelectedIds(prev => prev.filter(sid => sid !== id));
     else setSelectedIds(prev => [...prev, id]);
   };
@@ -116,42 +131,57 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Select Employees</label>
                   <button 
                     onClick={toggleSelectAll} 
-                    className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                    disabled={availableIds.length === 0}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {selectedIds.length === employees.length ? 'Deselect All' : 'Select All'}
+                    {selectedIds.length > 0 && selectedIds.length === availableIds.length ? 'Deselect All' : 'Select All'}
                   </button>
                 </div>
                 
                 <div className="border border-slate-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto bg-slate-50">
                   {employees.length > 0 ? (
                     employees.map(emp => {
+                      const isProcessed = processedIds.includes(emp._id);
                       const isSelected = selectedIds.includes(emp._id);
                       return (
                         <div 
                           key={emp._id} 
                           onClick={() => toggleEmployee(emp._id)}
-                          className={`flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 cursor-pointer transition-all ${
-                            isSelected ? 'bg-blue-50' : 'hover:bg-white'
+                          className={`flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 transition-all ${
+                            isProcessed ? 'bg-slate-50 opacity-60 cursor-not-allowed' :
+                            isSelected ? 'bg-blue-50 cursor-pointer' : 'hover:bg-white cursor-pointer'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                             isProcessed ? 'border-slate-300 bg-slate-200' :
                              isSelected ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'
                           }`}>
-                            {isSelected && (
+                            {isSelected && !isProcessed && (
                               <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
                               </svg>
                             )}
+                            {isProcessed && (
+                              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            )}
                           </div>
                           
-                          <div>
-                            <p className={`text-sm font-semibold ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
+                          <div className="flex-1">
+                            <p className={`text-sm font-semibold ${isProcessed ? 'text-slate-500' : isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
                               {emp.firstName} {emp.lastName}
                             </p>
                             <p className="text-[10px] text-slate-500">
                               {emp.employeeCode} • {emp.department?.name || 'No Dept'}
                             </p>
                           </div>
+                          
+                          {isProcessed && (
+                            <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-1 rounded uppercase tracking-wider">
+                              Processed
+                            </span>
+                          )}
                         </div>
                       );
                     })
@@ -286,12 +316,10 @@ const Dashboard = () => {
     try { const res = await API.get('/employees'); setEmployees(res.data); } catch (e) { console.error(e); }
   };
 
-  // --- UPDATED ERROR HANDLING ---
   const handleAttendance = async (e) => {
     e.preventDefault();
     setAttendanceError(null); 
 
-    // Professional Frontend Validation
     if (!attendanceData.employeeId) {
       setAttendanceError("Please select an employee from the dropdown menu before confirming.");
       return; 
@@ -300,15 +328,10 @@ const Dashboard = () => {
     try {
       await API.post('/attendance', attendanceData);
       setShowAttendanceModal(false);
-      
-      // Reset the form so it's clean for the next time they open it
       setAttendanceData({ employeeId: '', status: 'Present', date: new Date().toISOString().slice(0,10) });
-      
       loadStats(); 
     } catch (e) { 
-      // Clean Backend Error Fallback
       const backendError = e.response?.data?.message || '';
-      
       if (backendError.includes('Cast to ObjectId') || backendError.includes('validation failed')) {
           setAttendanceError("Unable to save. Please ensure all required fields are filled correctly.");
       } else {
@@ -441,7 +464,6 @@ const Dashboard = () => {
             
             <form onSubmit={handleAttendance} className="p-6 space-y-5">
               
-              {/* Professional Error Banner */}
               {attendanceError && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
                   <div className="mt-0.5"><Icons.Alert /></div>

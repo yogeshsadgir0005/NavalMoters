@@ -8,7 +8,9 @@ const {
   updateWizardStep,
   getMyEmployeeProfile,
   getEmployeeProgress,
-addSalaryIncrement
+  addSalaryIncrement,
+  terminateEmployee,         
+  getTerminatedEmployees     
 } = require('../controllers/employeeController');
 
 const { protect, restrictTo } = require('../middlewares/authMiddleware');
@@ -16,20 +18,20 @@ const upload = require('../config/multer');
 
 router.use(protect);
 
-// Admin/HR
 router.post('/', restrictTo('ADMIN', 'HR'), createEmployee);
 router.get('/', restrictTo('ADMIN', 'HR'), getEmployees);
 
-// Employee self
+router.get('/terminated/history', restrictTo('ADMIN', 'HR'), getTerminatedEmployees);
+router.post('/:id/terminate', restrictTo('ADMIN', 'HR'), terminateEmployee);
+
 router.get('/me', restrictTo('EMPLOYEE'), getMyEmployeeProfile);
 
-// Progress (Admin/HR)
 router.get('/:id/progress', restrictTo('ADMIN', 'HR'), getEmployeeProgress);
 router.post('/:id/increment', restrictTo('ADMIN', 'HR'), addSalaryIncrement);
-// View employee (Admin/HR or Employee self – controller enforces self check)
+
 router.get('/:id', getEmployeeById);
 
-// Upload fields
+// FIX: Set large maxCount limits so multiple uploads are never restricted
 const uploadFields = upload.fields([
   { name: 'aadhar', maxCount: 1 },
   { name: 'pan', maxCount: 1 },
@@ -38,8 +40,8 @@ const uploadFields = upload.fields([
   { name: 'appHindi', maxCount: 1 },
   { name: 'appEnglish', maxCount: 1 },
   { name: 'bankProof', maxCount: 1 },
-  { name: 'certificates', maxCount: 10 },
-  { name: 'otherKyc', maxCount: 10 },
+  { name: 'certificates', maxCount: 20 }, // Increased
+  { name: 'otherKyc', maxCount: 20 },     // Increased
 ]);
 
 router.patch('/:id/wizard', restrictTo('ADMIN', 'HR'), uploadFields, updateWizardStep);

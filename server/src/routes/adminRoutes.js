@@ -8,7 +8,8 @@ const {
   updateWizardStep
 } = require('../controllers/employeeController');
 
-const { getDashboardStats, getHRUsers } = require('../controllers/adminController');
+// ADDED: grantHRAccess and removeHRAccess to the import list
+const { getDashboardStats, getHRUsers, grantHRAccess, removeHRAccess } = require('../controllers/adminController');
 const { protect, restrictTo } = require('../middlewares/authMiddleware');
 const upload = require('../config/multer');
 
@@ -21,6 +22,10 @@ router.get('/', restrictTo('ADMIN', 'HR'), getEmployees);
 // ✅ MUST BE BEFORE `/:id`
 router.get('/hr-users', restrictTo('ADMIN'), getHRUsers);
 router.get("/dashboard", restrictTo("ADMIN"), protect, getDashboardStats);
+
+// FIXED: Removed the "adminController." prefix since we destructured the import
+router.put('/hr-users/:id/grant', grantHRAccess);
+router.put('/hr-users/:id/revoke', removeHRAccess);
 
 // Read-only employee view
 router.get('/:id', getEmployeeById);

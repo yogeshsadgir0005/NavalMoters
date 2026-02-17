@@ -7,11 +7,10 @@ const incrementSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   previousSalary: Number,
   newSalary: Number,
-  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Optional audit trail
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } 
 });
 
 const employeeSchema = new mongoose.Schema({
-  // Identity
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
@@ -19,20 +18,22 @@ const employeeSchema = new mongoose.Schema({
   phone: String,
   employeeCode: { type: String, unique: true },
   
-  // Profile Status
   isProfileComplete: { type: Boolean, default: false },
   
-  // Job Details
+  status: { type: String, enum: ['Active', 'Terminated'], default: 'Active' }, 
+  terminationDetails: {
+    date: Date,
+    terminatedBy: String
+  },
+  
   department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
   jobProfile: { type: mongoose.Schema.Types.ObjectId, ref: 'JobProfile' },
   doj: Date,
   wageType: { type: String, enum: ['Monthly', 'Daily'], default: 'Monthly' },
   baseSalary: { type: Number, default: 0 },
 
-  // History Arrays
-  increments: [incrementSchema], // <--- NEW: Stores history of salary changes
+  increments: [incrementSchema],
 
-  // Personal & Family
   dob: Date,
   address: String,
   bankDetails: {
@@ -52,7 +53,6 @@ const employeeSchema = new mongoose.Schema({
     kids: [{ name: String, gender: String, dob: Date }]
   },
   
-  // Documents (Filenames)
   documents: {
     aadhar: String,
     pan: String,
@@ -60,6 +60,7 @@ const employeeSchema = new mongoose.Schema({
     dl: String,
     appHindi: String,
     appEnglish: String,
+    bankProof: String, // <--- FIXED: Added missing bankProof field
     certificates: [String],
     otherKyc: [String]
   },

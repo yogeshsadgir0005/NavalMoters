@@ -1,7 +1,7 @@
 const Employee = require('../models/Employee');
 const Attendance = require('../models/Attendance');
 const Salary = require('../models/Salary');
-const User = require('../models/User');
+const User = require('../models/User'); // <--- CRITICAL IMPORT ADDED
 
 exports.getDashboardStats = async (req, res) => {
   try {
@@ -24,6 +24,7 @@ exports.getDashboardStats = async (req, res) => {
 
     const pendingProfiles = await Employee.countDocuments({ isProfileComplete: false });
     
+    // Salary Pending (Current Month)
     const currentMonth = new Date().toISOString().slice(0, 7); 
     const salaryPending = await Salary.countDocuments({
       month: currentMonth,
@@ -42,50 +43,14 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
+// --- NEW FUNCTION TO LIST HR USERS ---
 exports.getHRUsers = async (req, res) => {
   try {
-    // Excluding the hashed password but keeping assignedPassword for the dashboard
+    // Find all users with role 'HR' and exclude the password field
     const users = await User.find({ role: 'HR' }).select('-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
     console.error("Get HR Users Error:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// --- NEW ENDPOINTS FOR HR ACCESS CONTROL ---
-
-exports.grantHRAccess = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { password } = req.body;
-    
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    
-    user.password = password; // Will automatically get hashed by pre-save hook
-    user.assignedPassword = password; // Saved as plaintext strictly for admin viewing
-    await user.save();
-    
-    res.json({ message: "Access granted", user });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.removeHRAccess = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    
-    user.password = undefined; // Nullifying access
-    user.assignedPassword = undefined; // Hiding from dashboard
-    await user.save();
-    
-    res.json({ message: "Access removed", user });
-  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };

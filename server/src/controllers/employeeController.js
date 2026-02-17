@@ -1,13 +1,7 @@
 const Employee = require('../models/Employee');
 const User = require('../models/User');
-const sheetService = require('../services/googleSheetService'); // <--- 1. Import Service
-/**
- * Profile completion gate (Hard Lock)
- * Minimum:
- * 1) Aadhar OR Aadhar file uploaded (documents.aadhar)
- * 2) Bank account + IFSC
- * 3) department + jobProfile
- */
+const sheetService = require('../services/googleSheetService');
+
 function computeProfileGate(emp) {
   const missing = [];
 
@@ -54,10 +48,10 @@ function stripEmpty(updates) {
   return updates;
 }
 
-// Create Initial Employee (Admin/HR Only)
 exports.createEmployee = async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, employeeCode } = req.body;
+    // FIX: Extracted department & jobProfile from request body
+    const { firstName, lastName, email, phone, employeeCode, role, department, jobProfile } = req.body;
 
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
@@ -74,12 +68,14 @@ exports.createEmployee = async (req, res) => {
       email,
       phone: phone || '',
       employeeCode: code,
+      department: department || null, // <--- FIXED: Now saves department immediately
+      jobProfile: jobProfile || null, // <--- FIXED: Now saves jobProfile immediately
       isProfileComplete: false
     });
 
     const user = await User.create({
       email,
-      role: 'EMPLOYEE',
+      role: role === 'HR' ? 'HR' : 'EMPLOYEE',
       employeeProfile: employee._id
     });
 
@@ -93,10 +89,9 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
-// List employees (Admin/HR)
 exports.getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find()
+    const employees = await Employee.find({ status: { $ne: 'Terminated' } })
       .populate('department', 'name')
       .populate('jobProfile', 'name')
       .sort({ createdAt: -1 });
@@ -107,7 +102,6 @@ exports.getEmployees = async (req, res) => {
   }
 };
 
-// Get employee by id (Admin/HR OR Employee self)
 exports.getEmployeeById = async (req, res) => {
   try {
     const employee = await Employee.findById(req.params.id)
@@ -116,7 +110,6 @@ exports.getEmployeeById = async (req, res) => {
 
     if (!employee) return res.status(404).json({ message: 'Not found' });
 
-    // Employee can only view self
     if (req.user.role === 'EMPLOYEE') {
       const myId = String(req.user.employeeProfile || '');
       if (String(employee._id) !== myId) {
@@ -131,7 +124,6 @@ exports.getEmployeeById = async (req, res) => {
   }
 };
 
-// Employee self endpoint
 exports.getMyEmployeeProfile = async (req, res) => {
   try {
     if (req.user.role !== 'EMPLOYEE') {
@@ -151,7 +143,6 @@ exports.getMyEmployeeProfile = async (req, res) => {
   }
 };
 
-// Wizard Save (Step-based)
 exports.updateWizardStep = async (req, res) => {
   const { id } = req.params;
   const step = Number(req.query.step || 1);
@@ -159,17 +150,14 @@ exports.updateWizardStep = async (req, res) => {
   let updates = { ...req.body };
   stripEmpty(updates);
 
-  // Parse nested JSON
   if (updates.bankDetails) updates.bankDetails = safeJsonParse(updates.bankDetails, {});
   if (updates.family) updates.family = safeJsonParse(updates.family, {});
   if (updates.lastJob) updates.lastJob = safeJsonParse(updates.lastJob, {});
   if (updates.documentsMeta) updates.documentsMeta = safeJsonParse(updates.documentsMeta, {});
 
-  // Parse arrays if sent as JSON strings
   if (updates.siblings) updates.siblings = safeJsonParse(updates.siblings, []);
   if (updates.kids) updates.kids = safeJsonParse(updates.kids, []);
 
-  // Put siblings/kids into family
   if (updates.siblings || updates.kids) {
     updates.family = updates.family || {};
     if (updates.siblings) updates.family.siblings = updates.siblings;
@@ -178,7 +166,6 @@ exports.updateWizardStep = async (req, res) => {
     delete updates.kids;
   }
 
-  // Handle files
   let employee = await Employee.findById(id);
   if (!employee) return res.status(404).json({ message: 'Employee not found' });
 
@@ -188,7 +175,6 @@ exports.updateWizardStep = async (req, res) => {
       const arr = req.files[field] || [];
       if (!arr.length) return;
 
-      // multi-file fields
       if (field === 'certificates' || field === 'otherKyc') {
         mergedDocs[field] = [...(mergedDocs[field] || []), ...arr.map((f) => f.filename)];
       } else {
@@ -198,12 +184,10 @@ exports.updateWizardStep = async (req, res) => {
     updates.documents = mergedDocs;
   }
 
-  // Apply update
   employee = await Employee.findByIdAndUpdate(id, updates, { new: true })
     .populate('department')
     .populate('jobProfile');
 
-  // Gate recalculation every save
   const gate = computeProfileGate(employee);
   employee.isProfileComplete = gate.isComplete;
   await employee.save();
@@ -211,7 +195,6 @@ exports.updateWizardStep = async (req, res) => {
   res.json({ ...employee.toObject(), missingFields: gate.missing, stepSaved: step });
 };
 
-// Progress endpoint for personnel list
 exports.getEmployeeProgress = async (req, res) => {
   try {
     const employee = await Employee.findById(req.params.id)
@@ -222,7 +205,6 @@ exports.getEmployeeProgress = async (req, res) => {
 
     const gate = computeProfileGate(employee);
 
-    // Simple step completion heuristic
     const step1 = !!(employee.firstName || employee.lastName || employee.documents?.aadhar || employee.bankDetails?.accountNo);
     const step2 = !!(employee.family?.motherName || employee.family?.fatherName || (employee.family?.siblings || []).length || (employee.family?.kids || []).length);
     const step3 = !!(employee.department && employee.jobProfile && employee.baseSalary);
@@ -259,10 +241,8 @@ exports.addSalaryIncrement = async (req, res) => {
       newSalary = Math.max(0, previousSalary - value); 
     }
 
-    // Update DB
     employee.baseSalary = newSalary;
     
-    // Create Log Object
     const logEntry = {
       amount: value,
       type,
@@ -272,12 +252,8 @@ exports.addSalaryIncrement = async (req, res) => {
       date: new Date()
     };
 
-    // Add to History
     employee.increments.push(logEntry);
-
     await employee.save();
-
-    // 👇 2. Sync to Google Sheet (Fire and Forget)
     sheetService.syncIncrement(logEntry, employee);
 
     res.json({ 
@@ -286,6 +262,49 @@ exports.addSalaryIncrement = async (req, res) => {
       increments: employee.increments 
     });
 
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.terminateEmployee = async (req, res) => {
+  try {
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) return res.status(404).json({ message: 'Employee not found' });
+
+    const actionUser = await User.findById(req.user.id);
+    let terminatedBy = 'Admin';
+    if (actionUser && actionUser.role === 'HR') {
+      terminatedBy = `HR (${actionUser.email})`;
+    }
+
+    employee.status = 'Terminated';
+    employee.terminationDetails = {
+      date: new Date(),
+      terminatedBy
+    };
+    await employee.save();
+
+    if (employee.userId) {
+      await User.findByIdAndDelete(employee.userId);
+    } else {
+      await User.findOneAndDelete({ employeeProfile: employee._id });
+    }
+
+    res.json({ message: 'Employee terminated successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getTerminatedEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find({ status: 'Terminated' })
+      .populate('department', 'name')
+      .populate('jobProfile', 'name')
+      .sort({ 'terminationDetails.date': -1 });
+
+    res.json(employees);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -4,20 +4,27 @@ import API from '../api/axios';
 
 const Icons = {
   Shield: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
-  Mail: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-  Lock: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
-  UserPlus: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>,
-  User: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
-  Calendar: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
-  Alert: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+  Alert: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
+  ChevronDown: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
+  ChevronUp: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>,
+  XCircle: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 };
 
 const AdminUserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [formData, setFormData] = useState({ email: '', password: '', role: 'HR' });
   const [loading, setLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedHR, setSelectedHR] = useState(null);
+  const [hrPassword, setHrPassword] = useState('');
+  const [grantError, setGrantError] = useState(null);
+  
+  const [revokeModalOpen, setRevokeModalOpen] = useState(false);
+  const [userToRevoke, setUserToRevoke] = useState(null);
+  const [revokeError, setRevokeError] = useState(null);
+
+  const [expandedUser, setExpandedUser] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -35,28 +42,47 @@ const AdminUserManagement = () => {
     }
   };
 
-  const handleCreate = async (e) => {
+  const handleGrantAccess = async (e) => {
     e.preventDefault();
-    setError(null);
-    setCreating(true);
+    setProcessing(true);
+    setGrantError(null);
     try {
-      await API.post('/auth/register-hr', formData);
-      setFormData({ email: '', password: '', role: 'HR' });
+      await API.put(`/admin/hr-users/${selectedHR._id}/grant`, { password: hrPassword });
+      setModalOpen(false);
+      setHrPassword('');
+      setSelectedHR(null);
       fetchUsers();
     } catch (e) {
-      const backendError = e.response?.data?.message || '';
-      
-      if (backendError.toLowerCase().includes('duplicate') || backendError.includes('E11000')) {
-        setError("This email address is already registered in the system.");
-      } else if (backendError.toLowerCase().includes('validation')) {
-        setError("Please provide a valid email address and secure password.");
-      } else {
-        setError(backendError || "An unexpected error occurred while granting access.");
-      }
+      setGrantError(e.response?.data?.message || "An unexpected error occurred while granting access.");
     } finally { 
-      setCreating(false); 
+      setProcessing(false); 
     }
   };
+
+  const confirmRemoveAccess = async () => {
+    if (!userToRevoke) return;
+    setProcessing(true);
+    setRevokeError(null);
+    try {
+      await API.put(`/admin/hr-users/${userToRevoke._id}/revoke`);
+      setExpandedUser(null);
+      setRevokeModalOpen(false);
+      setUserToRevoke(null);
+      fetchUsers();
+    } catch (e) {
+      setRevokeError(e.response?.data?.message || "An unexpected error occurred while revoking access.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const initiateRemoveAccess = (user) => {
+      setUserToRevoke(user);
+      setRevokeError(null);
+      setRevokeModalOpen(true);
+  };
+
+  const toggleExpand = (id) => setExpandedUser(prev => prev === id ? null : id);
 
   return (
     <Layout>
@@ -71,78 +97,9 @@ const AdminUserManagement = () => {
             </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-slate-200 mb-8 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                Grant New Access
-            </h3>
-          </div>
-          
-          <div className="p-6">
-            {error && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3 mb-5">
-                <div className="mt-0.5"><Icons.Alert /></div>
-                <div>
-                  <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error processing request</h4>
-                  <p className="text-xs mt-0.5">{error}</p>
-                </div>
-              </div>
-            )}
-            
-            <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-7 gap-5 items-end">
-                <div className="md:col-span-3 space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Email Address</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
-                            <Icons.Mail />
-                        </div>
-                        <input 
-                            required
-                            type="email" 
-                            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
-                            placeholder="hr@naval.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        />
-                    </div>
-                </div>
-
-                <div className="md:col-span-3 space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Set Password</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
-                            <Icons.Lock />
-                        </div>
-                        <input 
-                            required
-                            type="password" 
-                            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) => setFormData({...formData, password: e.target.value})}
-                        />
-                    </div>
-                </div>
-
-                <div className="md:col-span-1">
-                    <button 
-                        disabled={creating}
-                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm shadow-md shadow-blue-100 transition-all flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {creating ? (
-                            <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : <Icons.UserPlus />}
-                        {creating ? 'Adding...' : 'Add'}
-                    </button>
-                </div>
-            </form>
-          </div>
-        </div>
-
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-            <h3 className="font-bold text-slate-800 text-sm">Authorized Users</h3>
+            <h3 className="font-bold text-slate-800 text-sm">Authorized HRs</h3>
             <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">{users.length} Active</span>
           </div>
 
@@ -150,49 +107,158 @@ const AdminUserManagement = () => {
             <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr>
-                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">User Identity</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">HR Identity</th>
                     <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Access Role</th>
-                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Created On</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                 </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                 {loading ? (
                     <tr><td colSpan="3" className="p-8 text-center text-slate-500 text-sm">Loading users...</td></tr>
+                ) : users.length === 0 ? (
+                    <tr><td colSpan="3" className="p-8 text-center text-slate-400 text-xs italic">No HR users configured.</td></tr>
                 ) : users.map(u => (
+                    <>
                     <tr key={u._id} className="hover:bg-blue-50/10 transition-colors group">
-                    <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                                u.role === 'ADMIN' ? 'bg-slate-800 text-white' : 'bg-blue-100 text-blue-600'
-                            }`}>
-                                {u.email.charAt(0).toUpperCase()}
+                        <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                                    u.role === 'ADMIN' ? 'bg-slate-800 text-white' : 'bg-blue-100 text-blue-600'
+                                }`}>
+                                    {u.email.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="font-semibold text-slate-700 text-sm group-hover:text-blue-700 transition-colors">{u.email}</span>
                             </div>
-                            <span className="font-semibold text-slate-700 text-sm group-hover:text-blue-700 transition-colors">{u.email}</span>
-                        </div>
-                    </td>
-                    <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border ${
-                            u.role === 'ADMIN' 
-                            ? 'bg-slate-100 text-slate-700 border-slate-200' 
-                            : 'bg-purple-50 text-purple-700 border-purple-100'
-                        }`}>
-                            {u.role === 'ADMIN' && <span className="mr-1 text-[8px]">🛡️</span>}
-                            {u.role}
-                        </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 text-slate-400 text-xs font-medium">
-                            <Icons.Calendar />
-                            {new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </div>
-                    </td>
+                        </td>
+                        <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border bg-purple-50 text-purple-700 border-purple-100">
+                                {u.role}
+                            </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-3">
+                                {u.assignedPassword ? (
+                                    <>
+                                        <button 
+                                            onClick={() => initiateRemoveAccess(u)} 
+                                            className="px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors"
+                                        >
+                                            Remove Access
+                                        </button>
+                                        <button onClick={() => toggleExpand(u._id)} className="p-1.5 text-slate-400 hover:text-blue-600 bg-white border border-slate-200 rounded-lg shadow-sm transition-all hover:bg-blue-50">
+                                            {expandedUser === u._id ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button 
+                                        onClick={() => { setSelectedHR(u); setGrantError(null); setModalOpen(true); }} 
+                                        className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+                                    >
+                                        Grant Access
+                                    </button>
+                                )}
+                            </div>
+                        </td>
                     </tr>
+                    
+                    {expandedUser === u._id && u.assignedPassword && (
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                            <td colSpan="3" className="p-4">
+                                <div className="bg-white border border-slate-200 rounded-lg p-4 max-w-md mx-auto shadow-sm flex flex-col gap-2">
+                                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Login Email</span>
+                                        <span className="text-sm font-semibold text-slate-800">{u.email}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-1">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Password</span>
+                                        <span className="text-sm font-mono font-bold text-slate-800">{u.assignedPassword}</span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    )}
+                    </>
                 ))}
                 </tbody>
             </table>
           </div>
         </div>
       </div>
+
+      {/* GRANT ACCESS MODAL */}
+      {modalOpen && selectedHR && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white w-full max-w-md rounded-xl shadow-2xl border border-slate-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="font-bold text-slate-800">Grant HR Access</h3>
+                    <button onClick={() => { setModalOpen(false); setHrPassword(''); setSelectedHR(null); setGrantError(null); }} className="text-slate-400 hover:text-slate-600"><Icons.XCircle /></button>
+                </div>
+                <form onSubmit={handleGrantAccess} className="p-6 space-y-5">
+                    {grantError && (
+                        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                            <div className="mt-0.5"><Icons.Alert /></div>
+                            <div>
+                                <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Access Error</h4>
+                                <p className="text-xs mt-0.5">{grantError}</p>
+                            </div>
+                        </div>
+                    )}
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
+                        <input type="email" value={selectedHR.email} disabled className="w-full px-4 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 text-sm font-medium cursor-not-allowed" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Set Password</label>
+                        <input required type="text" value={hrPassword} onChange={(e) => setHrPassword(e.target.value)} className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all" placeholder="Enter secure password" />
+                    </div>
+                    <div className="pt-2 flex justify-end gap-3">
+                        <button type="button" onClick={() => { setModalOpen(false); setHrPassword(''); setSelectedHR(null); setGrantError(null); }} className="px-5 py-2.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 font-bold text-slate-600 text-sm transition-all">Cancel</button>
+                        <button type="submit" disabled={processing} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm shadow-md transition-all">
+                            {processing ? 'Processing...' : 'Confirm Access'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
+
+      {/* REVOKE ACCESS MODAL */}
+      {revokeModalOpen && userToRevoke && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white w-full max-w-md rounded-xl shadow-2xl border border-slate-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-rose-50/30">
+                    <div className="flex items-center gap-2 text-rose-700">
+                        <Icons.Alert />
+                        <h3 className="font-bold text-rose-900">Revoke Access</h3>
+                    </div>
+                    <button onClick={() => { setRevokeModalOpen(false); setUserToRevoke(null); setRevokeError(null); }} className="text-slate-400 hover:text-slate-600"><Icons.XCircle /></button>
+                </div>
+                <div className="p-6">
+                    {revokeError && (
+                        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3 mb-5">
+                            <div className="mt-0.5"><Icons.Alert /></div>
+                            <div>
+                                <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Action Failed</h4>
+                                <p className="text-xs mt-0.5">{revokeError}</p>
+                            </div>
+                        </div>
+                    )}
+                    <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                        Are you sure you want to completely revoke system access for <strong className="text-slate-800">{userToRevoke.email}</strong>? They will immediately lose access to the portal.
+                    </p>
+                    
+                    <div className="flex gap-3 justify-end">
+                        <button onClick={() => { setRevokeModalOpen(false); setUserToRevoke(null); setRevokeError(null); }} className="px-5 py-2.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 font-bold text-slate-600 text-sm transition-all">
+                            Cancel
+                        </button>
+                        <button onClick={confirmRemoveAccess} disabled={processing} className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-sm shadow-md shadow-rose-200 transition-all flex items-center gap-2">
+                            {processing ? 'Processing...' : 'Yes, Revoke Access'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
     </Layout>
   );
 };
