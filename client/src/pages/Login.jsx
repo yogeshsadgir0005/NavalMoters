@@ -1,37 +1,35 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-// --- ICONS ---
 const Icons = {
   Mail: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
   Lock: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
   Key: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>,
   ArrowRight: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>,
-  Shield: () => <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+  Shield: () => <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
+  Alert: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 };
 
 const Login = () => {
   const { loginAdmin, requestOtp, verifyOtp } = useAuth();
   
-  // Default/Priority is Password login. Users can switch to OTP.
-  const [loginMethod, setLoginMethod] = useState('password'); // 'password' | 'otp'
+  const [loginMethod, setLoginMethod] = useState('password');
   
-  // Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       if (loginMethod === 'password') {
-        // Handle Password Login (Strictly for Admin/HR)
         await loginAdmin(email, password);
       } else {
-        // Handle Universal OTP Login
         if (!otpSent) {
           await requestOtp(email);
           setOtpSent(true);
@@ -40,7 +38,8 @@ const Login = () => {
         }
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Authentication Failed. Please check your credentials.');
+      const backendError = err.response?.data?.message || '';
+      setError(backendError || 'Authentication Failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -51,13 +50,12 @@ const Login = () => {
     setOtpSent(false);
     setOtp('');
     setPassword('');
+    setError(null);
   };
 
   return (
     <div className="flex h-screen bg-white">
-      {/* Left Brand Panel */}
       <div className="hidden lg:flex w-5/12 bg-slate-900 flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
         
         <div className="relative z-10">
@@ -77,7 +75,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right Login Form */}
       <div className="w-full lg:w-7/12 flex items-center justify-center p-8 bg-slate-50/30">
         <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
           
@@ -95,9 +92,18 @@ const Login = () => {
             </p>
           </div>
 
+          {error && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3 mb-6">
+              <div className="mt-0.5"><Icons.Alert /></div>
+              <div>
+                <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Authentication Error</h4>
+                <p className="text-xs mt-0.5">{error}</p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             
-            {/* Email Field (Always visible) */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Work Email</label>
               <div className="relative group">
@@ -116,7 +122,6 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Password Field (Priority View) */}
             {loginMethod === 'password' && (
               <div className="space-y-1.5 animate-in fade-in duration-300">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Password</label>
@@ -136,7 +141,6 @@ const Login = () => {
               </div>
             )}
 
-            {/* OTP Field (Shows only in OTP mode after code is sent) */}
             {loginMethod === 'otp' && otpSent && (
               <div className="space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">One-Time Password</label>
@@ -175,7 +179,6 @@ const Login = () => {
             </button>
           </form>
           
-          {/* Bottom Toggle Between Methods */}
           <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col items-center gap-3">
               <button 
                   type="button"

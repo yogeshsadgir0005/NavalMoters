@@ -10,6 +10,7 @@ const Icons = {
   CheckCircle: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   Moon: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>,
   ChevronRight: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
+  Alert: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 };
 
 const AttendanceLog = () => {
@@ -17,9 +18,9 @@ const AttendanceLog = () => {
   const [employees, setEmployees] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [attendanceData, setAttendanceData] = useState({ employeeId: '', status: 'Present', date: new Date().toISOString().slice(0,10) });
+  const [attendanceError, setAttendanceError] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -43,13 +44,26 @@ const AttendanceLog = () => {
 
   const handleAttendance = async (e) => {
     e.preventDefault();
+    setAttendanceError(null);
+
+    if (!attendanceData.employeeId) {
+      setAttendanceError("Please select an employee from the dropdown menu before confirming.");
+      return;
+    }
+
     try {
       await API.post('/attendance', attendanceData);
       setShowAttendanceModal(false);
+      setAttendanceData({ employeeId: '', status: 'Present', date: new Date().toISOString().slice(0,10) });
       fetchData();
-      alert("Attendance marked successfully!");
-    } catch (e) { 
-        alert(e.response?.data?.message || 'Error marking attendance'); 
+    } catch (e) {
+      const backendError = e.response?.data?.message || '';
+
+      if (backendError.includes('Cast to ObjectId') || backendError.includes('validation failed')) {
+          setAttendanceError("Unable to save. Please ensure all required fields are filled correctly.");
+      } else {
+          setAttendanceError(backendError || 'An unexpected error occurred while saving attendance.');
+      }
     }
   };
 
@@ -98,7 +112,7 @@ const AttendanceLog = () => {
 
         <div className="flex items-center gap-3">
             <button 
-                onClick={() => setShowAttendanceModal(true)}
+                onClick={() => { setShowAttendanceModal(true); setAttendanceError(null); }}
                 className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
             >
                 <Icons.CheckCircle /> Mark Attendance
@@ -201,10 +215,20 @@ const AttendanceLog = () => {
           <div className="bg-white p-0 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                  <h3 className="text-lg font-bold text-slate-800">Mark Attendance</h3>
-                 <button onClick={() => setShowAttendanceModal(false)} className="text-slate-400 hover:text-slate-600"><Icons.XCircle /></button>
+                 <button onClick={() => { setShowAttendanceModal(false); setAttendanceError(null); }} className="text-slate-400 hover:text-slate-600"><Icons.XCircle /></button>
             </div>
             
             <form onSubmit={handleAttendance} className="p-6 space-y-5">
+              {attendanceError && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                  <div className="mt-0.5"><Icons.Alert /></div>
+                  <div>
+                    <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error processing request</h4>
+                    <p className="text-xs mt-0.5">{attendanceError}</p>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Date</label>
                 <input 

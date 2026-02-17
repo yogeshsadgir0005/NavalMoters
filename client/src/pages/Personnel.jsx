@@ -3,13 +3,13 @@ import Layout from '../components/Layout';
 import API from '../api/axios';
 import { Link, useNavigate } from 'react-router-dom';
 
-// --- ICONS (Consistent with Dashboard/Sidebar) ---
 const Icons = {
   Search: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
   UserPlus: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>,
   ChevronRight: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
   XCircle: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
   Check: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
+  Alert: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 };
 
 const Badge = ({ tone = 'gray', children }) => {
@@ -37,12 +37,14 @@ const Personnel = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState(null);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [modalError, setModalError] = useState(null);
   const [masters, setMasters] = useState({ departments: [], jobProfiles: [] });
 
   const [form, setForm] = useState({
@@ -56,6 +58,7 @@ const Personnel = () => {
 
   const fetchAll = async () => {
     setLoading(true);
+    setPageError(null);
     try {
       const [empRes, masterRes] = await Promise.all([
         API.get('/employees'),
@@ -65,7 +68,7 @@ const Personnel = () => {
       setMasters(masterRes.data || { departments: [], jobProfiles: [] });
     } catch (e) {
       console.error(e);
-      alert(e.response?.data?.message || 'Failed to load employees');
+      setPageError(e.response?.data?.message || 'Failed to load employee records. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -96,10 +99,16 @@ const Personnel = () => {
 
   const resetModal = () => {
     setForm({ firstName: '', lastName: '', email: '', phone: '', department: '', jobProfile: '' });
+    setModalError(null);
   };
 
   const createEmployee = async () => {
-    if (!form.email.trim()) return alert('Email is required');
+    setModalError(null);
+    
+    if (!form.email.trim()) {
+        setModalError('Corporate Email is required to initialize a new record.');
+        return;
+    }
 
     setCreating(true);
     try {
@@ -118,7 +127,14 @@ const Personnel = () => {
       await fetchAll();
       navigate(`/wizard/${emp._id}`);
     } catch (e) {
-      alert(e.response?.data?.message || 'Failed to create employee');
+      const backendError = e.response?.data?.message || '';
+      if (backendError.toLowerCase().includes('duplicate') || backendError.includes('E11000')) {
+          setModalError('An employee with this email address already exists.');
+      } else if (backendError.toLowerCase().includes('validation')) {
+          setModalError('Please ensure all required fields are filled out correctly.');
+      } else {
+          setModalError(backendError || 'An unexpected error occurred while creating the employee.');
+      }
     } finally {
       setCreating(false);
     }
@@ -126,7 +142,6 @@ const Personnel = () => {
 
   return (
     <Layout>
-      {/* Header Section */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Personnel Directory</h1>
@@ -134,7 +149,7 @@ const Personnel = () => {
         </div>
 
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => { setOpen(true); setModalError(null); }}
           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <Icons.UserPlus />
@@ -142,7 +157,16 @@ const Personnel = () => {
         </button>
       </div>
 
-      {/* Filter Section */}
+      {pageError && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3 mb-8 shadow-sm">
+          <div className="mt-0.5"><Icons.Alert /></div>
+          <div>
+            <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">System Error</h4>
+            <p className="text-xs mt-0.5">{pageError}</p>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-xl p-4 mb-8 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4 md:items-center">
           <div className="relative flex-1">
@@ -172,7 +196,6 @@ const Personnel = () => {
         </div>
       </div>
 
-      {/* Table Section */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
@@ -272,11 +295,9 @@ const Personnel = () => {
         )}
       </div>
 
-      {/* Add Employee Modal */}
       {open && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-xl rounded-xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
-            {/* Modal Header */}
             <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">Add New Employee</h3>
@@ -290,79 +311,89 @@ const Personnel = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">First Name</label>
-                <input
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-                  value={form.firstName}
-                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                  placeholder="e.g. Yogesh"
-                />
-              </div>
+            <div className="p-8 pb-4">
+              {modalError && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3 mb-6">
+                  <div className="mt-0.5"><Icons.Alert /></div>
+                  <div>
+                    <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Validation Error</h4>
+                    <p className="text-xs mt-0.5">{modalError}</p>
+                  </div>
+                </div>
+              )}
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Last Name</label>
-                <input
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-                  value={form.lastName}
-                  onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                  placeholder="e.g. Sadgir"
-                />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">First Name</label>
+                  <input
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                    value={form.firstName}
+                    onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                    placeholder="e.g. Yogesh"
+                  />
+                </div>
 
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Corporate Email <span className="text-rose-500">*</span></label>
-                <input
-                  type="email"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="employee@naval.com"
-                />
-              </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Last Name</label>
+                  <input
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                    value={form.lastName}
+                    onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                    placeholder="e.g. Sadgir"
+                  />
+                </div>
 
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Phone Number</label>
-                <input
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+91 00000 00000"
-                />
-              </div>
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Corporate Email <span className="text-rose-500">*</span></label>
+                  <input
+                    type="email"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="employee@naval.com"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Department</label>
-                <select
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-slate-50 cursor-pointer transition-all"
-                  value={form.department}
-                  onChange={(e) => setForm({ ...form, department: e.target.value })}
-                >
-                  <option value="">— Select —</option>
-                  {(masters.departments || []).map(d => (
-                    <option key={d._id} value={d._id}>{d.name}</option>
-                  ))}
-                </select>
-              </div>
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Phone Number</label>
+                  <input
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+91 00000 00000"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Job Profile</label>
-                <select
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-slate-50 cursor-pointer transition-all"
-                  value={form.jobProfile}
-                  onChange={(e) => setForm({ ...form, jobProfile: e.target.value })}
-                >
-                  <option value="">— Select —</option>
-                  {(masters.jobProfiles || []).map(j => (
-                    <option key={j._id} value={j._id}>{j.name}</option>
-                  ))}
-                </select>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Department</label>
+                  <select
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-slate-50 cursor-pointer transition-all"
+                    value={form.department}
+                    onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  >
+                    <option value="">— Select —</option>
+                    {(masters.departments || []).map(d => (
+                      <option key={d._id} value={d._id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Job Profile</label>
+                  <select
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-slate-50 cursor-pointer transition-all"
+                    value={form.jobProfile}
+                    onChange={(e) => setForm({ ...form, jobProfile: e.target.value })}
+                  >
+                    <option value="">— Select —</option>
+                    {(masters.jobProfiles || []).map(j => (
+                      <option key={j._id} value={j._id}>{j.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="px-8 py-6 border-t border-slate-100 flex gap-3 justify-end bg-slate-50/30">
               <button
                 onClick={() => { setOpen(false); resetModal(); }}

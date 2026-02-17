@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import API from '../api/axios';
 
-// --- ICONS ---
 const Icons = {
   Check: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
   User: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
@@ -18,8 +17,6 @@ const Icons = {
   ChevronRight: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
   ChevronLeft: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
 };
-
-/** ---------- Small UI helpers ---------- */
 
 const StepPill = ({ active, done, label, sub, icon: Icon }) => {
   const base = 'w-full text-left p-4 rounded-xl border transition-all flex items-start gap-4 group';
@@ -52,8 +49,6 @@ const Field = ({ label, children, hint }) => (
   </div>
 );
 
-/** ---------- File preview helpers ---------- */
-
 const isImage = (name = '') => /\.(png|jpg|jpeg|webp|gif)$/i.test(name);
 const isPdf = (name = '') => /\.pdf$/i.test(name);
 
@@ -84,7 +79,7 @@ const PreviewModal = ({ open, onClose, title, files, employeeId }) => {
     return () => {
       Object.values(blobUrlMap).forEach(url => window.URL.revokeObjectURL(url));
     };
-  }, [open, employeeId, files]); // eslint-disable-line
+  }, [open, employeeId, files]); 
 
   if (!open) return null;
 
@@ -189,7 +184,6 @@ const FileCard = ({ title, employeeId, current, onChange, accept, multiple = fal
     <>
       <div className="group border border-slate-200 rounded-xl p-4 bg-white hover:border-blue-300 hover:shadow-md hover:shadow-blue-50 transition-all relative">
         <div className="flex flex-col gap-3">
-            {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
                     <p className="font-bold text-slate-800 text-sm">{title}</p>
@@ -209,7 +203,6 @@ const FileCard = ({ title, employeeId, current, onChange, accept, multiple = fal
                 )}
             </div>
 
-            {/* Thumbnail / Placeholder */}
             {files.length > 0 ? (
                 <div onClick={() => setOpen(true)} className="h-24 w-full rounded-lg border border-slate-100 bg-slate-50 overflow-hidden cursor-pointer relative group-hover:opacity-90 transition-opacity">
                     {isImage(files[0]) && thumbnailUrl ? (
@@ -229,7 +222,6 @@ const FileCard = ({ title, employeeId, current, onChange, accept, multiple = fal
                 </div>
             )}
 
-            {/* Input Wrapper */}
             <label className="block w-full">
                 <span className="sr-only">Choose file</span>
                 <input
@@ -260,8 +252,6 @@ const FileCard = ({ title, employeeId, current, onChange, accept, multiple = fal
   );
 };
 
-/** ---------- Main component ---------- */
-
 const EmployeeWizard = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -271,14 +261,15 @@ const EmployeeWizard = () => {
   const [masters, setMasters] = useState({ departments: [], jobProfiles: [] });
   const [employee, setEmployee] = useState(null);
   const [missingFields, setMissingFields] = useState([]);
+  const [formError, setFormError] = useState(null);
+  const [pageError, setPageError] = useState(null);
 
-  // Form State - ADDED dob and address here
   const [files, setFiles] = useState({
     aadhar: null, pan: null, photo: null, appHindi: null, appEnglish: null, dl: null, certificates: [], otherKyc: [],
   });
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '', bankAccountNo: '', bankIfsc: '', bankName: '',
-    dob: '', address: '', // <--- NEW FIELDS
+    dob: '', address: '', 
     motherName: '', motherWork: '', fatherName: '', fatherWork: '', maritalStatus: 'Single', anniversary: '', spouseName: '',
     siblings: [{ name: '', occupation: '' }], kids: [{ name: '', gender: '', dob: '' }],
     department: '', jobProfile: '', doj: '', wageType: 'Monthly', baseSalary: '',
@@ -287,6 +278,7 @@ const EmployeeWizard = () => {
 
   const loadInitial = async () => {
     try {
+      setPageError(null);
       const [empRes, masterRes] = await Promise.all([
         API.get(`/employees/${id}`),
         API.get('/masters'),
@@ -301,10 +293,8 @@ const EmployeeWizard = () => {
         ...prev,
         firstName: emp.firstName || '', lastName: emp.lastName || '', email: emp.email || '', phone: emp.phone || '',
         bankAccountNo: emp.bankDetails?.accountNo || '', bankIfsc: emp.bankDetails?.ifsc || '', bankName: emp.bankDetails?.bankName || '',
-        // LOAD NEW FIELDS
         dob: emp.dob ? String(emp.dob).slice(0, 10) : '',
         address: emp.address || '',
-        
         motherName: emp.family?.motherName || '', motherWork: emp.family?.motherWork || '', fatherName: emp.family?.fatherName || '', fatherWork: emp.family?.fatherWork || '',
         maritalStatus: emp.family?.maritalStatus || 'Single', anniversary: emp.family?.anniversary ? String(emp.family.anniversary).slice(0, 10) : '',
         spouseName: emp.family?.spouseName || '',
@@ -315,7 +305,7 @@ const EmployeeWizard = () => {
       }));
     } catch (e) {
       console.error(e);
-      alert(e.response?.data?.message || 'Failed to load employee');
+      setPageError(e.response?.data?.message || 'Failed to load employee data. Please try refreshing the page.');
     }
   };
 
@@ -327,23 +317,27 @@ const EmployeeWizard = () => {
 
   const validateStep = () => {
     if (step === 1) {
-      if (!form.email.trim()) return 'Email is required';
-      if (!form.bankAccountNo.trim()) return 'Bank account number is required';
-      if (!form.bankIfsc.trim()) return 'IFSC is required';
+      if (!form.email.trim()) return 'Official Email is required.';
+      if (!form.bankAccountNo.trim()) return 'Bank account number is required.';
+      if (!form.bankIfsc.trim()) return 'IFSC code is required.';
       return null;
     }
     if (step === 3) {
-      if (!form.department) return 'Department is required';
-      if (!form.jobProfile) return 'Job Profile is required';
-      if (!form.baseSalary) return 'Base salary is required';
+      if (!form.department) return 'Department is required.';
+      if (!form.jobProfile) return 'Job Profile is required.';
+      if (!form.baseSalary) return 'Base salary is required.';
       return null;
     }
     return null;
   };
 
   const saveStep = async (mode = 'next') => {
+    setFormError(null);
     const err = validateStep();
-    if (err) return alert(err);
+    if (err) {
+      setFormError(err);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -352,7 +346,6 @@ const EmployeeWizard = () => {
       if (step === 1) {
         payload.append('firstName', form.firstName); payload.append('lastName', form.lastName);
         payload.append('email', form.email); payload.append('phone', form.phone);
-        // APPEND NEW FIELDS
         payload.append('dob', form.dob);
         payload.append('address', form.address);
         
@@ -394,8 +387,22 @@ const EmployeeWizard = () => {
       }
 
       if (mode === 'exit') { navigate('/personnel'); return; }
-      if (step < 4) setStep(step + 1); else navigate('/personnel');
-    } catch (e) { console.error(e); alert(e.response?.data?.message || 'Failed to save'); } finally { setSaving(false); }
+      if (step < 4) {
+          setStep(step + 1);
+      } else {
+          navigate('/personnel');
+      }
+    } catch (e) { 
+      console.error(e); 
+      const backendError = e.response?.data?.message || '';
+      if (backendError.toLowerCase().includes('validation') || backendError.includes('Cast to ObjectId')) {
+          setFormError("Unable to save. Please ensure all required fields are filled correctly.");
+      } else {
+          setFormError(backendError || "An unexpected error occurred while saving information.");
+      }
+    } finally { 
+        setSaving(false); 
+    }
   };
 
   const docs = employee?.documents || {};
@@ -411,7 +418,6 @@ const EmployeeWizard = () => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -450,25 +456,22 @@ const EmployeeWizard = () => {
           </div>
         </div>
 
-        {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Left Stepper Sidebar */}
           <div className="lg:col-span-3 space-y-3">
-            <button onClick={() => setStep(1)} className="w-full">
+            <button onClick={() => { setStep(1); setFormError(null); }} className="w-full">
               <StepPill active={step === 1} done={step > 1} label="Identity & Docs" sub="Bank, KYC, Photos" icon={Icons.User} />
             </button>
-            <button onClick={() => setStep(2)} className="w-full">
+            <button onClick={() => { setStep(2); setFormError(null); }} className="w-full">
               <StepPill active={step === 2} done={step > 2} label="Family Tree" sub="Parents, Spouse, Kids" icon={Icons.Users} />
             </button>
-            <button onClick={() => setStep(3)} className="w-full">
+            <button onClick={() => { setStep(3); setFormError(null); }} className="w-full">
               <StepPill active={step === 3} done={step > 3} label="Professional" sub="Role, Salary, Dept" icon={Icons.Briefcase} />
             </button>
-            <button onClick={() => setStep(4)} className="w-full">
+            <button onClick={() => { setStep(4); setFormError(null); }} className="w-full">
               <StepPill active={step === 4} done={employee?.isProfileComplete} label="History" sub="Previous Experience" icon={Icons.Clock} />
             </button>
 
-            {/* Compliance Widget */}
             <div className={`rounded-xl p-4 mt-6 border ${
                 (missingFields || []).length === 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'
             }`}>
@@ -497,8 +500,27 @@ const EmployeeWizard = () => {
             </div>
           </div>
 
-          {/* Right Form Area */}
           <div className="lg:col-span-9 bg-white border border-slate-200 rounded-2xl shadow-sm p-8 min-h-[600px]">
+            {pageError && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3 mb-6">
+                <div className="mt-0.5"><Icons.Alert /></div>
+                <div>
+                  <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error loading data</h4>
+                  <p className="text-xs mt-0.5">{pageError}</p>
+                </div>
+              </div>
+            )}
+            
+            {formError && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3 mb-6">
+                <div className="mt-0.5"><Icons.Alert /></div>
+                <div>
+                  <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error processing request</h4>
+                  <p className="text-xs mt-0.5">{formError}</p>
+                </div>
+              </div>
+            )}
+
             {step === 1 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="border-b border-slate-100 pb-4">
@@ -521,12 +543,10 @@ const EmployeeWizard = () => {
                     <input className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                   </Field>
 
-                  {/* ADDED DATE OF BIRTH */}
                   <Field label="Date of Birth">
                     <input type="date" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} />
                   </Field>
 
-                  {/* ADDED RESIDENTIAL ADDRESS */}
                   <Field label="Residential Address">
                     <textarea rows="1" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                   </Field>

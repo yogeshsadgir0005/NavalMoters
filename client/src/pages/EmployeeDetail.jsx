@@ -3,7 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import API from '../api/axios';
 
-// --- ICONS ---
+const getFileUrl = (filename) => {
+  const baseUrl = API.defaults.baseURL || 'http://localhost:5000/api';
+  const serverUrl = baseUrl.replace(/\/api\/?$/, ''); 
+  return `${serverUrl}/uploads/${filename}`;
+};
+
 const Icons = {
   User: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
   Users: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
@@ -18,7 +23,8 @@ const Icons = {
   Clock: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   ChevronDown: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
   ChevronUp: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>,
-  History: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+  History: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  Alert: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 };
 
 const EmployeeDetail = () => {
@@ -27,12 +33,13 @@ const EmployeeDetail = () => {
   const [emp, setEmp] = useState(null);
   const [salaryHistory, setSalaryHistory] = useState([]); 
   const [activeTab, setActiveTab] = useState('self');
-  const [expandedRecords, setExpandedRecords] = useState({}); // <--- NEW: State for expanded rows
+  const [expandedRecords, setExpandedRecords] = useState({});
+  const [pageError, setPageError] = useState(null);
   
-  // Increment Modal State
   const [showIncModal, setShowIncModal] = useState(false);
   const [incForm, setIncForm] = useState({ type: 'Increment', amount: '', reason: '' });
   const [updating, setUpdating] = useState(false);
+  const [modalError, setModalError] = useState(null);
 
   useEffect(() => { 
       loadEmployee();
@@ -40,9 +47,10 @@ const EmployeeDetail = () => {
   }, [id]);
 
   const loadEmployee = () => {
+    setPageError(null);
     API.get(`/employees/${id}`)
        .then(res => setEmp(res.data))
-       .catch(() => alert('Failed to load employee'));
+       .catch(() => setPageError("Failed to load employee profile data."));
   };
 
   const loadSalaryHistory = async () => {
@@ -57,7 +65,12 @@ const EmployeeDetail = () => {
 
   const handleIncrement = async (e) => {
     e.preventDefault();
-    if (!incForm.amount || !incForm.reason) return alert("Amount and Reason are required");
+    setModalError(null);
+
+    if (!incForm.amount || !incForm.reason) {
+        setModalError("Please provide both an adjustment amount and a reason.");
+        return;
+    }
     
     setUpdating(true);
     try {
@@ -66,7 +79,12 @@ const EmployeeDetail = () => {
         setIncForm({ type: 'Increment', amount: '', reason: '' });
         loadEmployee(); 
     } catch (e) {
-        alert(e.response?.data?.message || "Failed to update salary");
+        const backendError = e.response?.data?.message || '';
+        if (backendError.toLowerCase().includes('validation')) {
+            setModalError("Unable to process request. Please check the amount and reason fields.");
+        } else {
+            setModalError(backendError || "An unexpected error occurred while updating the salary.");
+        }
     } finally {
         setUpdating(false);
     }
@@ -76,7 +94,6 @@ const EmployeeDetail = () => {
       setExpandedRecords(prev => ({ ...prev, [recId]: !prev[recId] }));
   };
 
-  // --- SUB-COMPONENT: History Row (Copied from SalaryReport) ---
   const HistoryRow = ({ adjustments }) => {
       if(!adjustments || adjustments.length === 0) return (
           <tr className="bg-slate-50 border-b border-slate-100"><td colSpan="7" className="p-4 text-center text-xs text-slate-400 italic">No adjustments recorded for this month.</td></tr>
@@ -117,8 +134,19 @@ const EmployeeDetail = () => {
   if (!emp) return (
     <Layout>
         <div className="flex h-[80vh] items-center justify-center flex-col gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-100 border-t-blue-600"></div>
-            <span className="text-slate-400 text-sm font-medium">Loading Profile...</span>
+            {pageError ? (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-lg flex flex-col items-center max-w-sm text-center">
+                    <Icons.Alert />
+                    <h4 className="font-bold text-rose-900 text-sm mt-2">Error Loading Profile</h4>
+                    <p className="text-xs mt-1">{pageError}</p>
+                    <button onClick={loadEmployee} className="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-xs font-bold shadow-sm transition-colors">Try Again</button>
+                </div>
+            ) : (
+                <>
+                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-100 border-t-blue-600"></div>
+                    <span className="text-slate-400 text-sm font-medium">Loading Profile...</span>
+                </>
+            )}
         </div>
     </Layout>
   );
@@ -145,12 +173,11 @@ const EmployeeDetail = () => {
 
   return (
     <Layout>
-      {/* 1. Header Profile Card */}
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-200 p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-5">
             <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center text-xl font-bold text-slate-500 overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100">
                 {emp.documents?.photo ? (
-                    <img src={`http://localhost:5000/uploads/${emp.documents.photo}`} className="w-full h-full object-cover" alt="Profile"/>
+                    <img src={getFileUrl(emp.documents.photo)} className="w-full h-full object-cover" alt="Profile"/>
                 ) : (
                     <span className="text-2xl">{emp.firstName?.[0]}</span>
                 )}
@@ -185,9 +212,7 @@ const EmployeeDetail = () => {
         </button>
       </div>
 
-      {/* 2. Content Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px] flex flex-col">
-        {/* Tab Navigation */}
         <div className="flex border-b border-slate-200 px-2 overflow-x-auto">
             <TabButton id="self" label="Personal" Icon={Icons.User} />
             <TabButton id="family" label="Family" Icon={Icons.Users} />
@@ -197,7 +222,6 @@ const EmployeeDetail = () => {
             <TabButton id="docs" label="Documents" Icon={Icons.Folder} />
         </div>
 
-        {/* Tab Body */}
         <div className="p-8">
             {activeTab === 'self' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 animate-in fade-in duration-300">
@@ -278,7 +302,6 @@ const EmployeeDetail = () => {
 
             {activeTab === 'financial' && (
                 <div className="space-y-8 animate-in fade-in duration-300">
-                    {/* Salary Overview Card */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800 p-6 rounded-xl shadow-lg text-white relative overflow-hidden">
                         <div className="relative z-10">
                             <span className="text-slate-300 text-[10px] font-bold uppercase tracking-widest">Current Base Salary</span>
@@ -290,17 +313,15 @@ const EmployeeDetail = () => {
                             </div>
                         </div>
                         <button 
-                            onClick={() => setShowIncModal(true)}
+                            onClick={() => { setShowIncModal(true); setModalError(null); }}
                             className="mt-4 md:mt-0 relative z-10 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg font-bold text-xs shadow-lg shadow-blue-900/50 transition-all active:scale-95 flex items-center gap-2"
                         >
                             <Icons.Edit /> Update Salary
                         </button>
                         
-                        {/* Decorative BG pattern */}
                         <div className="absolute right-0 top-0 h-full w-64 bg-white/5 skew-x-12 translate-x-10"></div>
                     </div>
                     
-                    {/* Structure Logs Table */}
                     <div>
                         <h3 className="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
                             <span className="w-1 h-4 bg-slate-300 rounded-full"></span> Structure History
@@ -417,7 +438,7 @@ const EmployeeDetail = () => {
                     {Object.entries(emp.documents || {}).map(([key, val]) => (
                         val && (
                             <a 
-                                href={`http://localhost:5000/uploads/${val}`} 
+                                href={getFileUrl(val)} 
                                 target="_blank" 
                                 rel="noreferrer" 
                                 key={key} 
@@ -442,7 +463,6 @@ const EmployeeDetail = () => {
         </div>
       </div>
 
-      {/* Increment Modal */}
       {showIncModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-slate-100">
@@ -450,10 +470,20 @@ const EmployeeDetail = () => {
                     <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
                         <Icons.Banknote /> Update Salary Structure
                     </h3>
-                    <button onClick={() => setShowIncModal(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><Icons.X /></button>
+                    <button onClick={() => { setShowIncModal(false); setModalError(null); }} className="text-slate-400 hover:text-rose-500 transition-colors"><Icons.X /></button>
                 </div>
                 
                 <form onSubmit={handleIncrement} className="p-6 space-y-5">
+                    {modalError && (
+                        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                            <div className="mt-0.5"><Icons.Alert /></div>
+                            <div>
+                                <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error processing request</h4>
+                                <p className="text-xs mt-0.5">{modalError}</p>
+                            </div>
+                        </div>
+                    )}
+
                     <div>
                         <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Action Type</label>
                         <div className="grid grid-cols-2 gap-3">

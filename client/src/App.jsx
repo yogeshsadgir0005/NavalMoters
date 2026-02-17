@@ -10,7 +10,6 @@ import AdminUserManagement from './pages/AdminUserManagement';
 import MySpace from './pages/MySpace';
 import AttendanceLog from './pages/AttendanceLog';
 import SalaryReport from './pages/SalaryReport';
-import Unauthorized from './pages/Unauthorized'; // 👈 IMPORT THIS
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, ready } = useAuth();
@@ -18,8 +17,6 @@ const ProtectedRoute = ({ children, roles }) => {
   if (!ready) return null;
 
   if (!user) return <Navigate to="/" replace />;
-  
-  // If user role is not in the allowed list, send them to Unauthorized page
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
@@ -34,8 +31,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           
-          {/* 👇 ADD THIS NEW ROUTE */}
-          <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Admin & HR Routes */}
           <Route path="/dashboard" element={<ProtectedRoute roles={['ADMIN', 'HR']}><Dashboard /></ProtectedRoute>} />

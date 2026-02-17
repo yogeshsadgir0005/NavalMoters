@@ -2,20 +2,18 @@ import Layout from "../components/Layout";
 import { useEffect, useMemo, useState } from "react";
 import API from "../api/axios";
 
-// --- ICONS ---
 const Icons = {
   User: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
   Bank: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 10V4M11 10V4M15 10V4M19 10V4M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z" /></svg>,
   Docs: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>,
   Shield: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
-  // Added for Payment History
   History: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   Clock: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   ChevronDown: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
   ChevronUp: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>,
+  Alert: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 };
 
-/** ---------- Preview helpers ---------- */
 const isImage = (name = "") => /\.(png|jpg|jpeg|webp|gif)$/i.test(name);
 const isPdf = (name = "") => /\.pdf$/i.test(name);
 
@@ -39,7 +37,7 @@ const PreviewModal = ({ open, onClose, title, files, employeeId }) => {
         setBlobUrlMap((p) => ({ ...p, [filename]: url }));
       } catch (e) {
         if (cancelled) return;
-        const msg = e?.response?.data?.message || e?.response?.statusText || e?.message || "Failed to load file";
+        const msg = e?.response?.data?.message || "Failed to securely load file from server.";
         setErrorMap((p) => ({ ...p, [filename]: msg }));
       } finally {
         if (cancelled) return;
@@ -49,7 +47,6 @@ const PreviewModal = ({ open, onClose, title, files, employeeId }) => {
 
     (files || []).forEach(fetchFile);
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, employeeId, (files || []).join("|")]);
 
   useEffect(() => {
@@ -90,7 +87,11 @@ const PreviewModal = ({ open, onClose, title, files, employeeId }) => {
 
                 <div className="p-4 flex items-center justify-center min-h-[200px]">
                   {isLoading && <div className="text-xs font-bold text-slate-400 animate-pulse">Loading...</div>}
-                  {err && <div className="text-xs font-bold text-rose-500">Error: {err}</div>}
+                  {err && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold">
+                        <Icons.Alert /> {err}
+                    </div>
+                  )}
                   {!isLoading && !err && isImage(f) && blobUrl && <img src={blobUrl} alt={f} className="max-h-[520px] w-full object-contain rounded" />}
                   {!isLoading && !err && isPdf(f) && blobUrl && <iframe title={f} src={blobUrl} className="w-full h-[520px] rounded border border-slate-200" />}
                   {!isLoading && !err && !isImage(f) && !isPdf(f) && <div className="text-xs text-slate-500 bg-slate-50 px-4 py-2 rounded">Preview not supported. Use Download.</div>}
@@ -112,7 +113,6 @@ const prettyLabel = (key) => {
   return map[key] || key;
 };
 
-// --- SUB-COMPONENT: History Row (Copied from SalaryReport/EmployeeDetail) ---
 const HistoryRow = ({ adjustments }) => {
     if(!adjustments || adjustments.length === 0) return (
         <tr className="bg-slate-50 border-b border-slate-100"><td colSpan="7" className="p-4 text-center text-xs text-slate-400 italic">No adjustments recorded for this month.</td></tr>
@@ -152,13 +152,12 @@ const HistoryRow = ({ adjustments }) => {
 
 const MySpace = () => {
   const [data, setData] = useState(null);
+  const [pageError, setPageError] = useState(null);
   
-  // Tab State
-  const [activeTab, setActiveTab] = useState('personal'); // personal | payments | docs
+  const [activeTab, setActiveTab] = useState('personal'); 
   const [salaryHistory, setSalaryHistory] = useState([]); 
   const [expandedRecords, setExpandedRecords] = useState({});
 
-  // File Preview State
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTitle, setPreviewTitle] = useState("Document");
   const [previewFiles, setPreviewFiles] = useState([]);
@@ -166,14 +165,16 @@ const MySpace = () => {
 
   const load = async () => {
     try {
+      setPageError(null);
       const res = await API.get("/employees/me");
       setData(res.data);
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+      setPageError(e.response?.data?.message || "Failed to securely connect to your profile. Please try reloading the page.");
+    }
   };
 
   useEffect(() => { load(); }, []);
 
-  // Load Salary History when Data is available
   useEffect(() => {
     if (data?._id) {
         loadSalaryHistory(data._id);
@@ -183,7 +184,6 @@ const MySpace = () => {
   const loadSalaryHistory = async (id) => {
       try {
           const { data: hist } = await API.get('/salary/history');
-          // Filter logic: Check both object populated or ID string
           const myHistory = hist.filter(s => s.employee?._id === id || s.employee === id);
           setSalaryHistory(myHistory);
       } catch (e) {
@@ -197,7 +197,6 @@ const MySpace = () => {
 
   const employeeId = data?._id || data?.id;
 
-  // Thumbnails Logic
   useEffect(() => {
     if(!data || !employeeId) return;
     const docs = data.documents || {};
@@ -215,7 +214,7 @@ const MySpace = () => {
        }
     });
     return () => { Object.values(thumbUrls).forEach(u => URL.revokeObjectURL(u)); };
-  }, [data, employeeId]); // eslint-disable-line
+  }, [data, employeeId]); 
 
   const firstFilePreview = (filename) => {
     if (!filename) return null;
@@ -262,12 +261,30 @@ const MySpace = () => {
   );
 
   if (!data) {
-    return <Layout><div className="p-20 text-center text-slate-400 text-sm font-bold uppercase tracking-widest animate-pulse">Loading Profile...</div></Layout>;
+    return (
+        <Layout>
+            {pageError ? (
+                <div className="flex h-[70vh] items-center justify-center p-8">
+                    <div className="bg-rose-50 border border-rose-200 text-rose-700 px-6 py-5 rounded-2xl flex flex-col items-center max-w-sm text-center shadow-sm">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-rose-500 mb-3 shadow-sm border border-rose-100">
+                            <Icons.Alert />
+                        </div>
+                        <h4 className="font-bold text-rose-900 text-base">Connection Error</h4>
+                        <p className="text-sm mt-1 mb-5">{pageError}</p>
+                        <button onClick={load} className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold shadow-md shadow-rose-200 transition-all active:scale-95">
+                            Retry Connection
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="p-20 text-center text-slate-400 text-sm font-bold uppercase tracking-widest animate-pulse">Loading Profile...</div>
+            )}
+        </Layout>
+    );
   }
 
   return (
     <Layout>
-      {/* Profile Header */}
       <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm mb-6 flex flex-col md:flex-row items-center gap-6">
         <div className="h-20 w-20 rounded-2xl bg-slate-900 flex items-center justify-center font-bold text-white text-3xl shadow-xl border border-slate-800">
             {(data.firstName?.[0] || "U").toUpperCase()}
@@ -285,19 +302,15 @@ const MySpace = () => {
         </div>
       </div>
 
-      {/* Content Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px] flex flex-col">
-        {/* Tab Navigation */}
         <div className="flex border-b border-slate-200 px-2 overflow-x-auto">
             <TabButton id="personal" label="Profile" Icon={Icons.User} />
             <TabButton id="payments" label="Payment History" Icon={Icons.Clock} />
             <TabButton id="docs" label="Documents" Icon={Icons.Docs} />
         </div>
 
-        {/* Tab Body */}
         <div className="p-8">
             
-            {/* 1. PERSONAL TAB (Original Grids) */}
             {activeTab === 'personal' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-300">
                     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
@@ -320,7 +333,6 @@ const MySpace = () => {
                 </div>
             )}
 
-            {/* 2. PAYMENT HISTORY TAB (New Table) */}
             {activeTab === 'payments' && (
                 <div className="animate-in fade-in duration-300">
                     <h3 className="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
@@ -384,7 +396,6 @@ const MySpace = () => {
                 </div>
             )}
 
-            {/* 3. DOCUMENTS TAB (Original Documents Grid) */}
             {activeTab === 'docs' && (
                 <div className="animate-in fade-in duration-300">
                     <div className="flex items-center gap-2 mb-6 text-slate-800">

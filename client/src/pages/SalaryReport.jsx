@@ -1,9 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import Layout from '../components/Layout';
 import API from '../api/axios';
-import { useNavigate } from 'react-router-dom'; // NEW IMPORT
+import { useNavigate } from 'react-router-dom';
 
-// --- ICONS ---
 const Icons = {
   Banknote: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   Users: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
@@ -17,19 +16,18 @@ const Icons = {
   Plus: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
   Trash: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
   History: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  // Added for Payroll Modal
   XCircle: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   Shield: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
   Alert: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
   CheckCircle: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
 };
 
-/** * --- PAYROLL WIZARD MODAL COMPONENT (Copied from Dashboard) --- */
 const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
-  const [step, setStep] = useState('input'); // input | loading | result
+  const [step, setStep] = useState('input');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [result, setResult] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (isOpen && employees.length > 0) {
@@ -51,16 +49,22 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
 
   const handleGenerate = async () => {
     if (selectedIds.length === 0) {
-      alert("Please select at least one employee.");
+      setError("Please select at least one employee from the list.");
       return;
     }
     setStep('loading');
+    setError(null);
     try {
       const res = await API.post('/salary/generate', { month, employeeIds: selectedIds });
       setResult(res.data);
       setStep('result');
     } catch (e) {
-      alert(e.response?.data?.message || 'Payroll Generation Failed');
+      const backendError = e.response?.data?.message || '';
+      if (backendError.includes('validation')) {
+          setError("Unable to generate payroll. Ensure profile completeness.");
+      } else {
+          setError(backendError || "An unexpected error occurred during generation.");
+      }
       setStep('input');
     }
   };
@@ -68,6 +72,7 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
   const handleClose = () => {
     setStep('input');
     setResult(null);
+    setError(null);
     onClose();
   };
 
@@ -79,7 +84,6 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100">
         
-        {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Run Monthly Payroll</h3>
@@ -90,13 +94,21 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
           </button>
         </div>
 
-        {/* Content Body */}
         <div className="p-6 overflow-y-auto custom-scrollbar">
           
-          {/* STEP 1: INPUT & SELECTION */}
           {step === 'input' && (
             <div className="space-y-6">
               
+              {error && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                  <div className="mt-0.5"><Icons.Alert /></div>
+                  <div>
+                    <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error processing request</h4>
+                    <p className="text-xs mt-0.5">{error}</p>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Select Month</label>
                 <input 
@@ -130,7 +142,6 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
                             isSelected ? 'bg-blue-50' : 'hover:bg-white'
                           }`}
                         >
-                          {/* Checkbox UI */}
                           <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                              isSelected ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'
                           }`}>
@@ -141,7 +152,6 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
                             )}
                           </div>
                           
-                          {/* Name & Details */}
                           <div>
                             <p className={`text-sm font-semibold ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
                               {emp.firstName} {emp.lastName}
@@ -162,7 +172,6 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
                 </p>
               </div>
 
-              {/* Info Box */}
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3">
                 <div className="text-blue-600 mt-0.5">
                   <Icons.Shield />
@@ -188,7 +197,6 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
             </div>
           )}
 
-          {/* STEP 2: LOADING */}
           {step === 'loading' && (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600"></div>
@@ -196,10 +204,8 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
             </div>
           )}
 
-          {/* STEP 3: RESULT */}
           {step === 'result' && (
             <div className="space-y-6">
-              {/* Summary Stats */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-center">
                   <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Generated</p>
@@ -213,7 +219,6 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
                 </div>
               </div>
 
-              {/* Blocked List */}
               {blocked.length > 0 ? (
                 <div className="border border-rose-100 rounded-lg overflow-hidden">
                   <div className="bg-rose-50 px-4 py-3 border-b border-rose-100 flex items-center justify-between">
@@ -266,60 +271,65 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
 
 
 const SalaryReport = () => {
-  const navigate = useNavigate(); // Hook for navigation in modal
+  const navigate = useNavigate();
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pageError, setPageError] = useState(null);
   
   const [filterMonth, setFilterMonth] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Expanded states
-  const [expandedEmployees, setExpandedEmployees] = useState({}); // For Group View
-  const [expandedRecords, setExpandedRecords] = useState({});     // For Detail History View
+  const [expandedEmployees, setExpandedEmployees] = useState({});
+  const [expandedRecords, setExpandedRecords] = useState({});
 
-  // Modal & Logic State
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState(null);
 
-  // --- NEW STATE: Payroll Modal & Employees ---
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [employees, setEmployees] = useState([]);
 
-  // Form State
   const [editForm, setEditForm] = useState({ 
     basePay: 0,
     netPay: 0, 
     status: '', 
-    adjustments: [] // Stores history: [{type, amount, reason, date}]
+    adjustments: []
   });
   
-  // Temporary inputs
   const [newAdj, setNewAdj] = useState({ type: 'Incentive', amount: '', reason: '' });
 
   useEffect(() => { 
       fetchHistory(); 
-      fetchEmployees(); // Fetch employees for payroll modal
+      fetchEmployees();
   }, []);
 
   const fetchHistory = async () => {
     setLoading(true);
+    setPageError(null);
     try {
       const res = await API.get('/salary/history');
       setSalaries(res.data);
       if (res.data.length > 0 && !filterMonth) setFilterMonth(res.data[0].month);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) {
+      setPageError("Failed to fetch payroll history.");
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const fetchEmployees = async () => {
-    try { const res = await API.get('/employees'); setEmployees(res.data); } catch (e) { console.error(e); }
+    try { 
+      const res = await API.get('/employees'); 
+      setEmployees(res.data); 
+    } catch (e) { 
+      setPageError("Failed to fetch employee list."); 
+    }
   };
 
   const handleEditClick = (rec) => {
     setEditingItem(rec);
     
-    // Calculate Base Pay Snapshot (Net - Adjustments) if not stored
-    // If backend doesn't store 'adjustments' yet, assume empty
     const existingAdjustments = rec.adjustments || [];
     const base = rec.baseSalary || (rec.netPay - (rec.incentives || 0));
 
@@ -331,17 +341,25 @@ const SalaryReport = () => {
     });
     
     setNewAdj({ type: 'Incentive', amount: '', reason: '' });
+    setEditError(null);
     setIsEditOpen(true);
   };
 
   const addAdjustment = () => {
-    if (!newAdj.amount || !newAdj.reason) return alert("Amount and Reason are required");
+    setEditError(null);
+    if (!newAdj.amount || !newAdj.reason) {
+        setEditError("Both amount and reason are required to add a transaction.");
+        return;
+    }
     
     const amountVal = parseFloat(newAdj.amount);
-    if (isNaN(amountVal) || amountVal <= 0) return alert("Enter valid amount");
+    if (isNaN(amountVal) || amountVal <= 0) {
+        setEditError("Please enter a valid positive amount.");
+        return;
+    }
 
     const newItem = {
-        id: Date.now(), // Temp UI ID
+        id: Date.now(),
         type: newAdj.type,
         amount: amountVal,
         reason: newAdj.reason,
@@ -377,6 +395,7 @@ const SalaryReport = () => {
   const handleSave = async () => {
     if(!editingItem) return;
     setSaving(true);
+    setEditError(null);
     try {
         const payload = { 
             netPay: editForm.netPay,
@@ -388,7 +407,12 @@ const SalaryReport = () => {
         setSalaries(prev => prev.map(item => item._id === editingItem._id ? res.data : item));
         setIsEditOpen(false);
         setEditingItem(null);
-    } catch(e) { alert(e.response?.data?.message || 'Failed to update salary'); } finally { setSaving(false); }
+    } catch(e) { 
+        const backendError = e.response?.data?.message || '';
+        setEditError(backendError || 'Failed to update salary successfully.');
+    } finally { 
+        setSaving(false); 
+    }
   };
 
   const toggleExpand = (empId) => setExpandedEmployees(p => ({ ...p, [empId]: !p[empId] }));
@@ -411,7 +435,6 @@ const SalaryReport = () => {
     return false;
   };
 
-  // --- FILTERING ---
   const filteredData = useMemo(() => {
     return salaries.filter(item => {
       const matchesMonth = filterMonth ? item.month === filterMonth : true;
@@ -444,7 +467,6 @@ const SalaryReport = () => {
   const availableMonths = [...new Set(salaries.map(s => s.month))].sort().reverse();
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '-';
 
-  // --- SUB-COMPONENT: Adjustments History Row ---
   const HistoryRow = ({ adjustments }) => {
       if(!adjustments || adjustments.length === 0) return (
           <tr className="bg-slate-50 border-b border-slate-100"><td colSpan="7" className="p-4 text-center text-xs text-slate-400 italic">No adjustments recorded for this month.</td></tr>
@@ -487,9 +509,7 @@ const SalaryReport = () => {
           <p className="text-slate-500 text-xs mt-0.5">Finalize monthly payouts and compliance clearance.</p>
         </div>
         
-        {/* Buttons Area */}
         <div className="flex items-center gap-3">
-            {/* NEW BUTTON */}
             <button 
                 onClick={() => setShowPayrollModal(true)}
                 className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-900 shadow-sm transition-all"
@@ -502,7 +522,16 @@ const SalaryReport = () => {
         </div>
       </div>
 
-      {/* Analytics Summary */}
+      {pageError && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3 mb-6 shadow-sm">
+          <div className="mt-0.5"><Icons.Alert /></div>
+          <div>
+            <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">System Error</h4>
+            <p className="text-xs mt-0.5">{pageError}</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between">
             <div>
@@ -533,7 +562,6 @@ const SalaryReport = () => {
         </div>
       </div>
 
-      {/* Control Bar */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 mb-8 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="flex gap-4 w-full md:w-auto">
             <select 
@@ -558,7 +586,6 @@ const SalaryReport = () => {
         </div>
       </div>
 
-      {/* Data Table */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -629,7 +656,6 @@ const SalaryReport = () => {
                         );
                     } 
                     else {
-                        // SINGLE MONTH VIEW
                         const rec = item;
                         const isAdvance = checkIsAdvance(rec.month, rec.updatedAt);
                         const isRecExpanded = expandedRecords[rec._id];
@@ -666,7 +692,6 @@ const SalaryReport = () => {
         </div>
       </div>
 
-      {/* NEW: Multi-Transaction Payroll Modal */}
       {isEditOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
@@ -680,7 +705,17 @@ const SalaryReport = () => {
                 </div>
                 
                 <div className="p-6 overflow-y-auto custom-scrollbar">
-                    {/* Employee & Base Pay Info */}
+
+                    {editError && (
+                        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3 mb-6">
+                            <div className="mt-0.5"><Icons.Alert /></div>
+                            <div>
+                                <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Validation Error</h4>
+                                <p className="text-xs mt-0.5">{editError}</p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-6">
                         <div className="flex justify-between items-start">
                             <div>
@@ -694,7 +729,6 @@ const SalaryReport = () => {
                         </div>
                     </div>
 
-                    {/* Transaction Adder */}
                     <div className="space-y-3 mb-6">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Add New Transaction</label>
                         <div className="flex gap-2">
@@ -728,7 +762,6 @@ const SalaryReport = () => {
                         />
                     </div>
 
-                    {/* Transaction History Table */}
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Transaction Log</label>
@@ -775,7 +808,6 @@ const SalaryReport = () => {
                         </div>
                     </div>
 
-                    {/* Final Calculation Footer */}
                     <div className="bg-slate-900 rounded-xl p-4 text-white flex justify-between items-center shadow-lg">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Final Net Pay</p>
@@ -785,7 +817,6 @@ const SalaryReport = () => {
                     </div>
                 </div>
 
-                {/* Modal Actions */}
                 <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex gap-3 shrink-0">
                     <div className="flex-1">
                         <select 
@@ -811,7 +842,6 @@ const SalaryReport = () => {
         </div>
       )}
 
-      {/* --- NEW: Payroll Wizard Modal (Copied Logic from Dashboard) --- */}
       <PayrollModal 
         isOpen={showPayrollModal} 
         onClose={() => setShowPayrollModal(false)} 

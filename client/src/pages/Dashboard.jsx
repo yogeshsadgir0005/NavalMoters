@@ -23,6 +23,7 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [result, setResult] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (isOpen && employees.length > 0) {
@@ -44,16 +45,17 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
 
   const handleGenerate = async () => {
     if (selectedIds.length === 0) {
-      alert("Please select at least one employee.");
+      setError("Please select at least one employee.");
       return;
     }
     setStep('loading');
+    setError(null);
     try {
       const res = await API.post('/salary/generate', { month, employeeIds: selectedIds });
       setResult(res.data);
       setStep('result');
     } catch (e) {
-      alert(e.response?.data?.message || 'Payroll Generation Failed');
+      setError(e.response?.data?.message || 'Payroll Generation Failed');
       setStep('input');
     }
   };
@@ -61,6 +63,7 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
   const handleClose = () => {
     setStep('input');
     setResult(null);
+    setError(null);
     onClose();
   };
 
@@ -87,6 +90,17 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
           {step === 'input' && (
             <div className="space-y-6">
               
+              {/* Professional Error Banner */}
+              {error && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                  <div className="mt-0.5"><Icons.Alert /></div>
+                  <div>
+                    <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error processing request</h4>
+                    <p className="text-xs mt-0.5">{error}</p>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Select Month</label>
                 <input 
@@ -257,6 +271,7 @@ const Dashboard = () => {
   const [showPayrollModal, setShowPayrollModal] = useState(false); 
   const [attendanceData, setAttendanceData] = useState({ employeeId: '', status: 'Present', date: new Date().toISOString().slice(0,10) });
   const [employees, setEmployees] = useState([]);
+  const [attendanceError, setAttendanceError] = useState(null); 
 
   useEffect(() => {
     loadStats();
@@ -271,13 +286,35 @@ const Dashboard = () => {
     try { const res = await API.get('/employees'); setEmployees(res.data); } catch (e) { console.error(e); }
   };
 
+  // --- UPDATED ERROR HANDLING ---
   const handleAttendance = async (e) => {
     e.preventDefault();
+    setAttendanceError(null); 
+
+    // Professional Frontend Validation
+    if (!attendanceData.employeeId) {
+      setAttendanceError("Please select an employee from the dropdown menu before confirming.");
+      return; 
+    }
+
     try {
       await API.post('/attendance', attendanceData);
       setShowAttendanceModal(false);
+      
+      // Reset the form so it's clean for the next time they open it
+      setAttendanceData({ employeeId: '', status: 'Present', date: new Date().toISOString().slice(0,10) });
+      
       loadStats(); 
-    } catch (e) { alert(e.response?.data?.message || 'Error'); }
+    } catch (e) { 
+      // Clean Backend Error Fallback
+      const backendError = e.response?.data?.message || '';
+      
+      if (backendError.includes('Cast to ObjectId') || backendError.includes('validation failed')) {
+          setAttendanceError("Unable to save. Please ensure all required fields are filled correctly.");
+      } else {
+          setAttendanceError(backendError || 'An unexpected error occurred while saving attendance.');
+      }
+    }
   };
 
   const StatCard = ({ label, val, color, icon }) => (
@@ -399,10 +436,22 @@ const Dashboard = () => {
           <div className="bg-white p-0 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                  <h3 className="text-lg font-bold text-slate-800">Mark Attendance</h3>
-                 <button onClick={() => setShowAttendanceModal(false)} className="text-slate-400 hover:text-slate-600"><Icons.XCircle /></button>
+                 <button onClick={() => { setShowAttendanceModal(false); setAttendanceError(null); }} className="text-slate-400 hover:text-slate-600"><Icons.XCircle /></button>
             </div>
             
             <form onSubmit={handleAttendance} className="p-6 space-y-5">
+              
+              {/* Professional Error Banner */}
+              {attendanceError && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                  <div className="mt-0.5"><Icons.Alert /></div>
+                  <div>
+                    <h4 className="font-bold text-rose-900 text-xs uppercase tracking-wider">Error processing request</h4>
+                    <p className="text-xs mt-0.5">{attendanceError}</p>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Date</label>
                 <input 
