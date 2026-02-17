@@ -6,21 +6,20 @@ const nodemailer = require('nodemailer');
 
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-// --- Nodemailer Transporter Setup ---
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.SMTP_EMAIL,
     pass: process.env.SMTP_PASS,
   },
 });
 
-// 1. Admin & HR Login (Strictly Password)
 exports.loginAdmin = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
 
-  // Only allow ADMIN or HR to use this endpoint (Employees don't have passwords anyway)
   if (user && (user.role === 'ADMIN' || user.role === 'HR') && user.password && (await user.matchPassword(password))) {
     res.json({
       _id: user._id,
@@ -34,7 +33,6 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
-// 2. Create New HR
 exports.registerHR = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -53,11 +51,9 @@ exports.registerHR = async (req, res) => {
   }
 };
 
-// 3. Unified OTP Request (Allows ADMIN, HR, and EMPLOYEE)
 exports.requestOtp = async (req, res) => {
   const { email } = req.body;
   
-  // Find user regardless of role. This allows Admin/HR to also use OTP if they want.
   const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ message: 'User not found in the system' });
 
@@ -91,7 +87,6 @@ exports.requestOtp = async (req, res) => {
   }
 };
 
-// 4. Unified OTP Verification
 exports.verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
   const otpRecord = await Otp.findOne({ email }).sort({ createdAt: -1 });
