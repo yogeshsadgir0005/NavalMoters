@@ -7,7 +7,7 @@ const app = express();
 
 const allowedOrigins = [
   "https://naval-moters.vercel.app",
-  "http://localhost:3000"
+  "http://localhost:5173"
 ];
 
 app.use(cors({
