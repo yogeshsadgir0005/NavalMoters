@@ -6,7 +6,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const app = express();
 
 const allowedOrigins = [
-  "https://naval-moters.vercel.app",
+  "https://nawal-moters.vercel.app",
   "http://localhost:5173"
 ];
 
