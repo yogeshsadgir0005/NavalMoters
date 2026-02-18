@@ -11,21 +11,8 @@ const Icons = {
   Check: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
   Alert: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
   Trash: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
-  Archive: () => <svg 
-    className="w-5 h-5" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-  >
-    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-    
-    <path d="M3 3v5h5" />
-    
-    <path d="M12 7v5l4 2" />
-  </svg>};
+  Archive: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+};
 
 const Badge = ({ tone = 'gray', children }) => {
   const styles = {
@@ -120,8 +107,8 @@ const Personnel = () => {
       const res = await API.post('/employees', {
         firstName: form.firstName.trim(), lastName: form.lastName.trim(),
         email: form.email.trim(), phone: form.phone.trim(),
-        department: form.department || undefined, // Sent to backend!
-        jobProfile: form.jobProfile || undefined, // Sent to backend!
+        department: form.department || undefined, 
+        jobProfile: form.jobProfile || undefined, 
         role: form.role 
       });
       setOpen(false); resetModal(); await fetchAll(); navigate(`/wizard/${res.data._id}`);
@@ -231,7 +218,11 @@ const Personnel = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filtered.map(emp => (
+                {filtered.map(emp => {
+                  // FIX: If backend says 100 progress, treat as complete
+                  const isEffectiveComplete = emp.isProfileComplete || emp.profileProgress === 100;
+                  
+                  return (
                   <tr key={emp._id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-6 py-5">
                       <div className="font-bold text-slate-800 text-sm">{(emp.firstName || '—')} {(emp.lastName || '')}</div>
@@ -243,16 +234,19 @@ const Personnel = () => {
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between w-44">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{emp.isProfileComplete ? 'Complete' : 'Profile Progress'}</span>
-                            <span className="text-[10px] font-bold text-slate-700">{emp.isProfileComplete ? '100%' : '35%'}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{isEffectiveComplete ? 'Complete' : 'Profile Progress'}</span>
+                            {/* FIX: Show ACTUAL calculated percentage, not hardcoded 35% */}
+                            <span className="text-[10px] font-bold text-slate-700">
+                                {isEffectiveComplete ? '100%' : `${emp.profileProgress || 0}%`}
+                            </span>
                         </div>
-                        <div className="w-44"><ProgressBar value={emp.profileProgress || (emp.isProfileComplete ? 100 : 35)} /></div>
-                        <div className="mt-1">{emp.isProfileComplete ? <Badge tone="green">Active</Badge> : <Badge tone="amber">Pending Data</Badge>}</div>
+                        <div className="w-44"><ProgressBar value={emp.profileProgress || (isEffectiveComplete ? 100 : 0)} /></div>
+                        <div className="mt-1">{isEffectiveComplete ? <Badge tone="green">Active</Badge> : <Badge tone="amber">Pending Data</Badge>}</div>
                       </div>
                     </td>
                     <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
-                            {emp.isProfileComplete ? (
+                            {isEffectiveComplete ? (
                                 <Link to={`/personnel/${emp._id}`} className="inline-flex items-center gap-2 text-slate-700 hover:text-blue-600 font-bold text-xs border border-slate-200 hover:border-blue-200 bg-white hover:bg-blue-50 px-4 py-2 rounded-lg transition-all shadow-sm">
                                 View Profile
                                 </Link>
@@ -271,7 +265,7 @@ const Personnel = () => {
                         </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

@@ -24,14 +24,14 @@ function computeProfileGate(emp) {
     missing.push('Department & Role');
   }
 
-  // 4. Documents (Check if at least one major document is uploaded)
+  // 4. Documents (Strict check for mandatory docs)
   const d = emp.documents || {};
-  const hasDoc = d.photo || d.aadhar || d.pan || d.dl || d.bankProof;
+  // FIX: Strictly check for the 4 mandatory documents
+  if (!d.photo) missing.push('Profile Photo');
+  if (!d.aadhar) missing.push('Aadhar Card');
+  if (!d.pan) missing.push('PAN Card');
+  if (!d.bankProof) missing.push('Bank Proof');
   
-  if (!hasDoc) {
-    missing.push('At least one Document');
-  }
-
   const isComplete = missing.length === 0;
   return { isComplete, missing };
 }
@@ -124,9 +124,10 @@ exports.getEmployees = async (req, res) => {
         // 4. Professional
         if (emp.department && emp.jobProfile) points += 20;
         
-        // 5. Docs (Any valid doc)
+        // 5. Docs (Must have all 4 mandatory)
         const d = emp.documents || {};
-        if (d.photo || d.aadhar || d.pan || d.dl || d.bankProof) points += 20;
+        // FIX: Stricter check for progress bar calculation
+        if (d.photo && d.aadhar && d.pan && d.bankProof) points += 20;
 
         const isCalculatedComplete = points === 100;
 
@@ -254,7 +255,8 @@ exports.getEmployeeProgress = async (req, res) => {
     if (employee.bankDetails?.accountNo) points += 1;
     if (employee.department && employee.jobProfile) points += 1;
     const d = employee.documents || {};
-    if (d.photo || d.aadhar || d.pan || d.bankProof) points += 1;
+    // FIX: Strict check for mandatory docs
+    if (d.photo && d.aadhar && d.pan && d.bankProof) points += 1;
 
     const completedSteps = points;
 

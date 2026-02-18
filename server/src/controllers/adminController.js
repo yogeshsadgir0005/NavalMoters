@@ -7,7 +7,7 @@ exports.getDashboardStats = async (req, res) => {
   try {
     const totalEmployees = await Employee.countDocuments();
     
-    const today = new Date();
+    const today = new Date(); 
     today.setHours(0,0,0,0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);

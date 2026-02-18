@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
 import API from '../api/axios';
 
@@ -35,11 +35,13 @@ const Field = ({ label, children, required }) => (
 const EmployeeWizard = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pageError, setPageError] = useState(null);
+  const [isFresher, setIsFresher] = useState(false);
 
   const [masters, setMasters] = useState({ departments: [], jobProfiles: [] });
   
@@ -92,9 +94,8 @@ const EmployeeWizard = () => {
         siblings: data.family?.siblings || [],
         kids: data.family?.kids || [],
 
-        // ACCURATELY CAPTURES THE DEPARTMENT / JOB PROFILE
-        department: data.department?._id || data.department || '',
-        jobProfile: data.jobProfile?._id || data.jobProfile || '',
+        department: data.department?._id || data.department || location.state?.department || '',
+        jobProfile: data.jobProfile?._id || data.jobProfile || location.state?.jobProfile || '',
         wageType: data.wageType || 'Monthly',
         baseSalary: data.baseSalary || '',
 
@@ -103,6 +104,8 @@ const EmployeeWizard = () => {
         lastRole: data.lastJob?.role || '',
         lastReason: data.lastJob?.reason || '',
       });
+
+      setIsFresher(!data.lastJob?.company);
 
       if (data.documents) {
           setExistingDocs(data.documents);
@@ -117,12 +120,18 @@ const EmployeeWizard = () => {
   const isStepComplete = (stepId) => {
     switch(stepId) {
         case 1:
+            const hasDocs =
+                (files.photo || existingDocs.photo) &&
+                (files.aadhar || existingDocs.aadhar) &&
+                (files.pan || existingDocs.pan) &&
+                (files.bankProof || existingDocs.bankProof);
             return !!(
                 form.firstName?.trim() && form.lastName?.trim() &&
                 form.email?.trim() && form.phone?.trim() &&
                 form.dob && form.address?.trim() &&
                 form.bankAccountNo?.trim() && form.ifsc?.trim() &&
-                form.bankName?.trim()
+                form.bankName?.trim() &&
+                hasDocs
             );
         case 2:
             const baseS2 = !!(
@@ -131,7 +140,7 @@ const EmployeeWizard = () => {
                 form.maritalStatus
             );
             if (!baseS2) return false;
-            if (form.maritalStatus !== 'Single') {
+            if (form.maritalStatus === 'Married') {
                 return !!form.spouseName?.trim();
             }
             return true;
@@ -141,6 +150,7 @@ const EmployeeWizard = () => {
                 form.wageType && String(form.baseSalary).trim() !== ''
             );
         case 4:
+            if (isFresher) return true;
             return !!(
                 form.lastCompany?.trim() && form.lastDuration?.trim() &&
                 form.lastRole?.trim() && form.lastReason?.trim()
@@ -197,8 +207,8 @@ const EmployeeWizard = () => {
       fatherName: form.fatherName,
       fatherWork: form.fatherWork,
       maritalStatus: form.maritalStatus,
-      spouseName: form.maritalStatus === 'Single' ? '' : form.spouseName,
-      anniversary: form.maritalStatus === 'Single' ? null : form.anniversary
+      spouseName: form.maritalStatus === 'Married' ? form.spouseName : '',
+      anniversary: form.maritalStatus === 'Married' ? form.anniversary : null
     }));
 
     fd.append('siblings', JSON.stringify(form.siblings));
@@ -210,10 +220,10 @@ const EmployeeWizard = () => {
     if (form.baseSalary) fd.append('baseSalary', form.baseSalary);
 
     fd.append('lastJob', JSON.stringify({
-      company: form.lastCompany,
-      duration: form.lastDuration,
-      role: form.lastRole,
-      reason: form.lastReason
+      company: isFresher ? '' : form.lastCompany,
+      duration: isFresher ? '' : form.lastDuration,
+      role: isFresher ? '' : form.lastRole,
+      reason: isFresher ? '' : form.lastReason
     }));
 
     Object.keys(files).forEach(k => {
@@ -224,10 +234,16 @@ const EmployeeWizard = () => {
     });
 
     try {
-      await API.patch(`/employees/${id}/wizard?step=${stepNum}`, fd, {
+      const res = await API.patch(`/employees/${id}/wizard?step=${stepNum}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      
+      // FIX 2: Immediately update existingDocs state with the latest docs from backend response
+      // This ensures the "Uploaded" state reflects immediately without page refresh
       setFiles({});
+      if (res.data && res.data.documents) {
+          setExistingDocs(res.data.documents);
+      }
     } catch (e) {
       alert("Error saving step: " + (e.response?.data?.message || e.message));
       throw e;
@@ -265,32 +281,40 @@ const EmployeeWizard = () => {
       } catch (e) { console.error(e); }
   };
 
-  const FileUploader = ({ label, fieldName, multiple }) => (
-    <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 hover:border-blue-400 hover:bg-blue-50/50 transition-colors group relative bg-slate-50/50">
-        <input 
-            type="file" 
-            multiple={multiple}
-            onChange={(e) => handleFileChange(e, fieldName)} 
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-        />
-        <div className="flex items-center gap-4">
-            <div className="p-3 bg-white shadow-sm rounded-lg text-blue-500 group-hover:scale-110 transition-transform">
-                <Icons.Upload />
+  const FileUploader = ({ label, fieldName, multiple, required }) => {
+    // FIX 1: Proper check for empty arrays vs null values
+    const docValue = existingDocs[fieldName];
+    const isUploaded = Array.isArray(docValue) ? docValue.length > 0 : !!docValue;
+
+    return (
+        <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 hover:border-blue-400 hover:bg-blue-50/50 transition-colors group relative bg-slate-50/50">
+            <input 
+                type="file" 
+                multiple={multiple}
+                onChange={(e) => handleFileChange(e, fieldName)} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-white shadow-sm rounded-lg text-blue-500 group-hover:scale-110 transition-transform">
+                    <Icons.Upload />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-700">
+                        {label} {required && <span className="text-rose-500">*</span>}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                        {files[fieldName] 
+                            ? `${files[fieldName].length} file(s) selected` 
+                            : (isUploaded ? 'File already uploaded (Upload to replace)' : 'PDF, JPG, PNG up to 5MB')}
+                    </p>
+                </div>
+                {isUploaded && !files[fieldName] && (
+                    <div className="bg-emerald-100 text-emerald-700 p-1.5 rounded-md"><Icons.Check /></div>
+                )}
             </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-700">{label}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                    {files[fieldName] 
-                        ? `${files[fieldName].length} file(s) selected` 
-                        : (existingDocs[fieldName] ? 'File already uploaded (Upload to replace)' : 'PDF, JPG, PNG up to 5MB')}
-                </p>
-            </div>
-            {existingDocs[fieldName] && !files[fieldName] && (
-                <div className="bg-emerald-100 text-emerald-700 p-1.5 rounded-md"><Icons.Check /></div>
-            )}
         </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) return <Layout><div className="p-20 text-center text-slate-500 font-medium animate-pulse">Loading Wizard Data...</div></Layout>;
 
@@ -323,8 +347,8 @@ const EmployeeWizard = () => {
                         
                         return (
                         <div key={s.id} className="relative">
-                            {idx !== steps.length - 1 && (
-                                <div className={`absolute left-4 top-10 w-0.5 h-6 -ml-px transition-colors ${isComplete ? 'bg-emerald-400' : 'bg-slate-100'}`}></div>
+                            {idx !== steps.length - 1 && !isComplete && (
+                                <div className="absolute left-4 top-10 w-0.5 h-6 -ml-px transition-colors bg-slate-100"></div>
                             )}
                             <button 
                                 onClick={() => goToStep(s.id)}
@@ -390,13 +414,21 @@ const EmployeeWizard = () => {
                     <div className="border-t border-slate-100 pt-8">
                         <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2"><span className="w-1 h-4 bg-blue-600 rounded-full"></span> Mandatory Documents</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FileUploader label="Profile Photo" fieldName="photo" />
-                            <FileUploader label="Aadhar Card" fieldName="aadhar" />
-                            <FileUploader label="PAN Card" fieldName="pan" />
-                            <FileUploader label="Bank Proof (Passbook/Cheque)" fieldName="bankProof" />
+                            <FileUploader label="Profile Photo" fieldName="photo" required={true} />
+                            <FileUploader label="Aadhar Card" fieldName="aadhar" required={true} />
+                            <FileUploader label="PAN Card" fieldName="pan" required={true} />
+                            <FileUploader label="Bank Proof (Passbook/Cheque)" fieldName="bankProof" required={true} />
+                        </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-8">
+                        <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2"><span className="w-1 h-4 bg-slate-400 rounded-full"></span> Optional Documents</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FileUploader label="Driving License" fieldName="dl" />
                             <FileUploader label="Application (Hindi)" fieldName="appHindi" />
                             <FileUploader label="Application (English)" fieldName="appEnglish" />
+                            <FileUploader label="Certificates / Degrees" fieldName="certificates" multiple />
+                            <FileUploader label="Other KYC / Resignation Letters" fieldName="otherKyc" multiple />
                         </div>
                     </div>
                   </div>
@@ -420,7 +452,7 @@ const EmployeeWizard = () => {
                         </select>
                       </Field>
 
-                      {form.maritalStatus && form.maritalStatus !== 'Single' && (
+                      {form.maritalStatus === 'Married' && (
                         <>
                           <Field label="Spouse Name" required>
                             <input className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" value={form.spouseName} onChange={(e) => setForm({ ...form, spouseName: e.target.value })} />
@@ -428,7 +460,10 @@ const EmployeeWizard = () => {
                           <Field label="Anniversary Date">
                             <input type="date" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" value={form.anniversary} onChange={(e) => setForm({ ...form, anniversary: e.target.value })} />
                           </Field>
-
+                        </>
+                      )}
+                      
+                      {form.maritalStatus && form.maritalStatus !== 'Single' && (
                           <div className="md:col-span-2 space-y-4 mt-4">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                 <h4 className="font-bold text-slate-700 text-sm">Children Details</h4>
@@ -452,7 +487,6 @@ const EmployeeWizard = () => {
                             ))}
                             {form.kids.length === 0 && <p className="text-xs text-slate-400 italic">No children added.</p>}
                           </div>
-                        </>
                       )}
                     </div>
 
@@ -524,10 +558,18 @@ const EmployeeWizard = () => {
                 {currentStep === 4 && (
                   <div className="space-y-8 animate-in fade-in duration-300">
                     <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-6">
-                        <h3 className="font-bold text-blue-900 mb-1">Previous Employment</h3>
-                        <p className="text-xs text-blue-700 mb-6">Leave blank if this is the employee's first job.</p>
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="font-bold text-blue-900 mb-1">Previous Employment</h3>
+                                <p className="text-xs text-blue-700">Provide details of the last organization worked at.</p>
+                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2 rounded-lg border border-blue-100 shadow-sm hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" checked={isFresher} onChange={(e) => setIsFresher(e.target.checked)} />
+                                <span className="text-sm font-bold text-slate-700">I am a Fresher</span>
+                            </label>
+                        </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 transition-opacity ${isFresher ? 'opacity-50 pointer-events-none' : ''}`}>
                             <Field label="Company / Organization">
                                 <input className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white shadow-sm" placeholder="e.g. Tata Motors" value={form.lastCompany} onChange={(e) => setForm({ ...form, lastCompany: e.target.value })} />
                             </Field>
@@ -543,14 +585,6 @@ const EmployeeWizard = () => {
                             <Field label="Reason for Leaving">
                                 <input className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white shadow-sm" placeholder="e.g. Better Opportunity" value={form.lastReason} onChange={(e) => setForm({ ...form, lastReason: e.target.value })} />
                             </Field>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-slate-100 pt-8">
-                        <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2"><span className="w-1 h-4 bg-blue-600 rounded-full"></span> Supporting Documents</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FileUploader label="Certificates / Degrees" fieldName="certificates" multiple />
-                            <FileUploader label="Other KYC / Resignation Letters" fieldName="otherKyc" multiple />
                         </div>
                     </div>
                   </div>
