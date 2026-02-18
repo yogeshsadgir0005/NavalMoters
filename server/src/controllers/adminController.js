@@ -5,9 +5,11 @@ const User = require('../models/User');
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    const totalEmployees = await Employee.countDocuments();
+    // 1. Total Staff: Exclude Terminated
+    const totalEmployees = await Employee.countDocuments({ status: { $ne: 'Terminated' } });
     
-    const today = new Date(); 
+    // 2. Attendance Counts
+    const today = new Date();
     today.setHours(0,0,0,0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -22,8 +24,32 @@ exports.getDashboardStats = async (req, res) => {
       status: 'Absent'
     });
 
-    const pendingProfiles = await Employee.countDocuments({ isProfileComplete: false });
+    // 3. Pending Docs: Smart Calculation (Matches Personnel Page Logic)
+    // We fetch all active employees and check their fields manually to be 100% accurate
+    const allActiveEmployees = await Employee.find({ status: { $ne: 'Terminated' } })
+      .select('firstName lastName email phone family bankDetails department jobProfile documents isProfileComplete');
+
+    const pendingProfiles = allActiveEmployees.filter(emp => {
+        // If DB flag is already true, it's complete
+        if (emp.isProfileComplete) return false;
+
+        // Otherwise, run the "Strict Check"
+        const d = emp.documents || {};
+        const hasMandatoryDocs = d.photo && d.aadhar && d.pan && d.bankProof;
+        
+        const hasBasicInfo = emp.firstName && emp.lastName && emp.email && emp.phone;
+        const hasJobInfo = emp.department && emp.jobProfile;
+        const hasBankInfo = emp.bankDetails?.accountNo;
+
+        // If ALL criteria are met, it is NOT pending (return false)
+        if (hasBasicInfo && hasJobInfo && hasBankInfo && hasMandatoryDocs) {
+            return false; 
+        }
+        // Otherwise, it IS pending
+        return true; 
+    }).length;
     
+    // 4. Salary Pending
     const currentMonth = new Date().toISOString().slice(0, 7); 
     const salaryPending = await Salary.countDocuments({
       month: currentMonth,
@@ -44,7 +70,6 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getHRUsers = async (req, res) => {
   try {
-    // Excluding the hashed password but keeping assignedPassword for the dashboard
     const users = await User.find({ role: 'HR' }).select('-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
@@ -52,8 +77,6 @@ exports.getHRUsers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// --- NEW ENDPOINTS FOR HR ACCESS CONTROL ---
 
 exports.grantHRAccess = async (req, res) => {
   try {
@@ -63,8 +86,8 @@ exports.grantHRAccess = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
     
-    user.password = password; // Will automatically get hashed by pre-save hook
-    user.assignedPassword = password; // Saved as plaintext strictly for admin viewing
+    user.password = password; 
+    user.assignedPassword = password; 
     await user.save();
     
     res.json({ message: "Access granted", user });
@@ -80,8 +103,8 @@ exports.removeHRAccess = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
     
-    user.password = undefined; // Nullifying access
-    user.assignedPassword = undefined; // Hiding from dashboard
+    user.password = undefined; 
+    user.assignedPassword = undefined; 
     await user.save();
     
     res.json({ message: "Access removed", user });

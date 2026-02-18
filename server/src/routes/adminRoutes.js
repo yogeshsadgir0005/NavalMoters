@@ -21,9 +21,10 @@ router.get('/', restrictTo('ADMIN', 'HR'), getEmployees);
 
 // ✅ MUST BE BEFORE `/:id`
 router.get('/hr-users', restrictTo('ADMIN'), getHRUsers);
-router.get("/dashboard", restrictTo("ADMIN"), protect, getDashboardStats);
 
-// FIXED: Removed the "adminController." prefix since we destructured the import
+// FIX: Added "HR" to allowed roles for dashboard
+router.get("/dashboard", restrictTo("ADMIN", "HR"), getDashboardStats);
+
 router.put('/hr-users/:id/grant', grantHRAccess);
 router.put('/hr-users/:id/revoke', removeHRAccess);
 
@@ -38,8 +39,9 @@ const uploadFields = upload.fields([
   { name: 'appHindi', maxCount: 1 },
   { name: 'appEnglish', maxCount: 1 },
   { name: 'dl', maxCount: 1 },
-  { name: 'certificates', maxCount: 5 },
-  { name: 'otherKyc', maxCount: 5 }
+  { name: 'certificates', maxCount: 20 },
+  { name: 'otherKyc', maxCount: 20 },
+  { name: 'bankProof', maxCount: 1 }
 ]);
 
 router.patch('/:id/wizard', uploadFields, updateWizardStep);

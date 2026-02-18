@@ -56,7 +56,7 @@ const Sidebar = () => {
       {/* Brand Header */}
       <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
         <h1 className="text-xl font-extrabold tracking-tighter text-white">
-          NAVAL<span className="text-blue-500">MOTOR</span>
+          NAVAL<span className="text-blue-500">MOTER</span>
         </h1>
       </div>
 
@@ -70,7 +70,7 @@ const Sidebar = () => {
             </div>
             <NavItem to="/dashboard" label="Dashboard" Icon={Icons.Dashboard} />
             <NavItem to="/personnel" label="Personnel" Icon={Icons.Users} />
-            <NavItem to="/masters" label="System Masters" Icon={Icons.Settings} />
+            <NavItem to="/masters" label="System Settings" Icon={Icons.Settings} />
             
             {/* Reports Group */}
             <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">

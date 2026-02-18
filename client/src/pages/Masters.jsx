@@ -186,7 +186,7 @@ const Masters = () => {
             <div className="p-2 bg-white border border-slate-200 rounded-lg shadow-sm text-slate-700">
                 <Icons.Settings />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Masters</h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Settings</h1>
         </div>
         <p className="text-slate-500 text-sm ml-12">Configure global dropdown values for Departments and Job Profiles.</p>
       </div>
