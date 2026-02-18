@@ -13,7 +13,7 @@ const Layout = ({ children }) => {
           <div className="flex items-center gap-2">
             <span className="w-1 h-5 bg-blue-600 rounded-full"></span>
             <h2 className="text-sm font-bold text-slate-500 uppercase tracking-[0.2em]">
-              Naval Moter <span className="text-slate-300 mx-1">|</span> Enterprise Portal
+              NaWal Moter <span className="text-slate-300 mx-1">|</span> Enterprise Portal
             </h2>
           </div>
 

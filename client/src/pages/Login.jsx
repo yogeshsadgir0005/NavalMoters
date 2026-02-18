@@ -63,7 +63,7 @@ const Login = () => {
                 <span className="w-8 h-0.5 bg-blue-500"></span> Enterprise Portal
             </div>
             <h1 className="text-5xl font-extrabold text-white tracking-tight leading-tight">
-                NAVAL<span className="text-blue-500">MOTER</span>
+                NAWAL<span className="text-blue-500">MOTER</span>
             </h1>
             <p className="text-slate-400 mt-4 max-w-sm text-lg leading-relaxed">
                 Seamless workforce management, attendance tracking, and secure payroll processing.
@@ -71,7 +71,7 @@ const Login = () => {
         </div>
 
         <div className="relative z-10 text-slate-500 text-xs font-medium">
-            © {new Date().getFullYear()} Naval Moter. Internal Use Only.
+            © {new Date().getFullYear()} NaWal Moter. Internal Use Only.
         </div>
       </div>
 
@@ -115,7 +115,7 @@ const Login = () => {
                   required
                   disabled={loginMethod === 'otp' && otpSent}
                   className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 disabled:opacity-60 disabled:cursor-not-allowed"
-                  placeholder="name@navalmoter.com" 
+                  placeholder="name@nawalmoter.com" 
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
                 />

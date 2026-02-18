@@ -314,7 +314,7 @@ const Personnel = () => {
                 </div>
                 <div className="md:col-span-2 space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Corporate Email <span className="text-rose-500">*</span></label>
-                  <input type="email" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="employee@naval.com" />
+                  <input type="email" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="employee@naWal.com" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Phone Number</label>
