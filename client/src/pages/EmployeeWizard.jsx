@@ -41,7 +41,7 @@ const EmployeeWizard = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pageError, setPageError] = useState(null);
-  const [isFresher, setIsFresher] = useState(false);
+  const [isFresher, setIsFresher] = useState(false); // Default is false, fixed the bug
 
   const [masters, setMasters] = useState({ departments: [], jobProfiles: [] });
   
@@ -105,7 +105,9 @@ const EmployeeWizard = () => {
         lastReason: data.lastJob?.reason || '',
       });
 
-      setIsFresher(!data.lastJob?.company);
+      // FIX: Removed the line that was automatically checking the "Fresher" box
+      // based on empty data. Now it stays false (user must check it manually).
+      // setIsFresher(!data.lastJob?.company); 
 
       if (data.documents) {
           setExistingDocs(data.documents);
@@ -150,6 +152,7 @@ const EmployeeWizard = () => {
                 form.wageType && String(form.baseSalary).trim() !== ''
             );
         case 4:
+            // Since default is now FALSE, this won't return true immediately
             if (isFresher) return true;
             return !!(
                 form.lastCompany?.trim() && form.lastDuration?.trim() &&
@@ -238,8 +241,6 @@ const EmployeeWizard = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      // FIX 2: Immediately update existingDocs state with the latest docs from backend response
-      // This ensures the "Uploaded" state reflects immediately without page refresh
       setFiles({});
       if (res.data && res.data.documents) {
           setExistingDocs(res.data.documents);
@@ -282,7 +283,6 @@ const EmployeeWizard = () => {
   };
 
   const FileUploader = ({ label, fieldName, multiple, required }) => {
-    // FIX 1: Proper check for empty arrays vs null values
     const docValue = existingDocs[fieldName];
     const isUploaded = Array.isArray(docValue) ? docValue.length > 0 : !!docValue;
 
