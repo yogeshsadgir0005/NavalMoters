@@ -2,25 +2,35 @@ const Employee = require('../models/Employee');
 const User = require('../models/User');
 const sheetService = require('../services/googleSheetService');
 
+/**
+ * Profile completion gate
+ * Checks for essential fields to determine if the profile is "Complete"
+ */
 function computeProfileGate(emp) {
   const missing = [];
 
-  const hasAadhar =
-    !!emp.documents?.aadhar || !!emp.documents?.aadharNo || !!emp.documents?.aadharNumber;
+  // 1. Identity
+  if (!emp.firstName || !emp.lastName || !emp.phone || !emp.email) {
+    missing.push('Basic Identity');
+  }
 
-  const hasBank =
-    !!emp.bankDetails?.accountNo &&
-    String(emp.bankDetails.accountNo).trim().length >= 6 &&
-    !!emp.bankDetails?.ifsc &&
-    String(emp.bankDetails.ifsc).trim().length >= 6;
+  // 2. Banking (Basic check)
+  if (!emp.bankDetails?.accountNo) {
+    missing.push('Bank Account');
+  }
 
-  const hasDept = !!emp.department;
-  const hasJob = !!emp.jobProfile;
+  // 3. Professional
+  if (!emp.department || !emp.jobProfile) {
+    missing.push('Department & Role');
+  }
 
-  if (!hasAadhar) missing.push('Aadhar (upload)');
-  if (!hasBank) missing.push('Bank Details (Account No + IFSC)');
-  if (!hasDept) missing.push('Department');
-  if (!hasJob) missing.push('Job Profile');
+  // 4. Documents (Check if at least one major document is uploaded)
+  const d = emp.documents || {};
+  const hasDoc = d.photo || d.aadhar || d.pan || d.dl || d.bankProof;
+  
+  if (!hasDoc) {
+    missing.push('At least one Document');
+  }
 
   const isComplete = missing.length === 0;
   return { isComplete, missing };
@@ -50,7 +60,6 @@ function stripEmpty(updates) {
 
 exports.createEmployee = async (req, res) => {
   try {
-    // FIX: Extracted department & jobProfile from request body
     const { firstName, lastName, email, phone, employeeCode, role, department, jobProfile } = req.body;
 
     if (!email) return res.status(400).json({ message: 'Email is required' });
@@ -68,8 +77,8 @@ exports.createEmployee = async (req, res) => {
       email,
       phone: phone || '',
       employeeCode: code,
-      department: department || null, // <--- FIXED: Now saves department immediately
-      jobProfile: jobProfile || null, // <--- FIXED: Now saves jobProfile immediately
+      department: department || null, 
+      jobProfile: jobProfile || null,
       isProfileComplete: false
     });
 
@@ -89,6 +98,7 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
+// FIXED: Calculates progress dynamically so the bar shows 100% correctly
 exports.getEmployees = async (req, res) => {
   try {
     const employees = await Employee.find({ status: { $ne: 'Terminated' } })
@@ -96,7 +106,39 @@ exports.getEmployees = async (req, res) => {
       .populate('jobProfile', 'name')
       .sort({ createdAt: -1 });
 
-    res.json(employees);
+    const result = employees.map(doc => {
+        const emp = doc.toObject();
+        
+        // Calculate Progress Score (5 Checkpoints = 20% each)
+        let points = 0;
+        
+        // 1. Basics
+        if (emp.firstName && emp.lastName && emp.email && emp.phone) points += 20;
+        
+        // 2. Family
+        if (emp.family?.motherName || emp.family?.fatherName) points += 20;
+        
+        // 3. Banking
+        if (emp.bankDetails?.accountNo) points += 20;
+        
+        // 4. Professional
+        if (emp.department && emp.jobProfile) points += 20;
+        
+        // 5. Docs (Any valid doc)
+        const d = emp.documents || {};
+        if (d.photo || d.aadhar || d.pan || d.dl || d.bankProof) points += 20;
+
+        const isCalculatedComplete = points === 100;
+
+        return {
+            ...emp,
+            profileProgress: points,
+            // If calculated as 100%, force completion status for UI, otherwise use DB flag
+            isProfileComplete: isCalculatedComplete || emp.isProfileComplete 
+        };
+    });
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -205,18 +247,22 @@ exports.getEmployeeProgress = async (req, res) => {
 
     const gate = computeProfileGate(employee);
 
-    const step1 = !!(employee.firstName || employee.lastName || employee.documents?.aadhar || employee.bankDetails?.accountNo);
-    const step2 = !!(employee.family?.motherName || employee.family?.fatherName || (employee.family?.siblings || []).length || (employee.family?.kids || []).length);
-    const step3 = !!(employee.department && employee.jobProfile && employee.baseSalary);
-    const step4 = !!(employee.lastJob?.company || employee.lastJob?.role || employee.lastJob?.duration);
+    // Reuse the same logic logic as getEmployees for consistency
+    let points = 0;
+    if (employee.firstName && employee.lastName && employee.email) points += 1;
+    if (employee.family?.motherName) points += 1;
+    if (employee.bankDetails?.accountNo) points += 1;
+    if (employee.department && employee.jobProfile) points += 1;
+    const d = employee.documents || {};
+    if (d.photo || d.aadhar || d.pan || d.bankProof) points += 1;
 
-    const completedSteps = [step1, step2, step3, step4].filter(Boolean).length;
+    const completedSteps = points;
 
     res.json({
       isProfileComplete: employee.isProfileComplete,
       missingFields: gate.missing,
       completedSteps,
-      totalSteps: 4
+      totalSteps: 5
     });
   } catch (e) {
     res.status(500).json({ message: e.message });
