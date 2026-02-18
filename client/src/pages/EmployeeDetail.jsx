@@ -112,6 +112,16 @@ const EmployeeDetail = () => {
       setExpandedRecords(prev => ({ ...prev, [recId]: !prev[recId] }));
   };
 
+  // Helper to check if any document actually exists (not just empty array)
+  const hasAnyDocs = (docs) => {
+      if (!docs) return false;
+      return Object.entries(docs).some(([key, val]) => {
+          if (key === '_id') return false;
+          if (Array.isArray(val)) return val.length > 0;
+          return !!val;
+      });
+  };
+
   const HistoryRow = ({ adjustments }) => {
       if(!adjustments || adjustments.length === 0) return (
           <tr className="bg-slate-50 border-b border-slate-100"><td colSpan="7" className="p-4 text-center text-xs text-slate-400 italic">No adjustments recorded for this month.</td></tr>
@@ -466,10 +476,42 @@ const EmployeeDetail = () => {
                 </div>
             )}
 
+            {/* UPDATED DOCUMENT SECTION */}
             {activeTab === 'docs' && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in duration-300">
-                    {Object.entries(emp.documents || {}).map(([key, val]) => (
-                        val && (
+                    {/* Iterate over all document entries */}
+                    {Object.entries(emp.documents || {}).map(([key, val]) => {
+                        // Skip if system ID or if value is completely missing
+                        if (key === '_id' || !val) return null;
+
+                        // 1. HANDLE ARRAYS (Certificates, Other KYC)
+                        if (Array.isArray(val)) {
+                            // If array is empty, show nothing
+                            if (val.length === 0) return null;
+                            
+                            // Map each file in the array to a card
+                            return val.map((filename, index) => (
+                                <a 
+                                    href={getFileUrl(filename)} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    key={`${key}-${index}`} 
+                                    className="group flex flex-col items-center justify-center p-6 border border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50/30 transition-all cursor-pointer bg-white shadow-sm hover:shadow-md"
+                                >
+                                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <Icons.File />
+                                    </div>
+                                    <div className="text-xs font-bold uppercase text-slate-600 group-hover:text-blue-700 text-center">
+                                        {key.replace(/([A-Z])/g, ' $1')} 
+                                        <span className="ml-1 text-slate-400 opacity-70">#{index + 1}</span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 mt-1 font-medium group-hover:text-blue-500">Click to View</div>
+                                </a>
+                            ));
+                        }
+
+                        // 2. HANDLE SINGLE FILES (Aadhar, PAN, etc.) - Only if val is a non-empty string
+                        return (
                             <a 
                                 href={getFileUrl(val)} 
                                 target="_blank" 
@@ -480,12 +522,16 @@ const EmployeeDetail = () => {
                                 <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                     <Icons.File />
                                 </div>
-                                <div className="text-xs font-bold uppercase text-slate-600 group-hover:text-blue-700">{key.replace(/([A-Z])/g, ' $1')}</div>
+                                <div className="text-xs font-bold uppercase text-slate-600 group-hover:text-blue-700 text-center">
+                                    {key.replace(/([A-Z])/g, ' $1')}
+                                </div>
                                 <div className="text-[10px] text-slate-400 mt-1 font-medium group-hover:text-blue-500">Click to View</div>
                             </a>
-                        )
-                    ))}
-                    {Object.keys(emp.documents || {}).length === 0 && (
+                        );
+                    })}
+
+                    {/* ONLY SHOW THIS IF NO DOCS EXIST */}
+                    {!hasAnyDocs(emp.documents) && (
                         <div className="col-span-full p-10 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400">
                             <Icons.Folder />
                             <span className="text-sm font-medium mt-2">No documents uploaded</span>
