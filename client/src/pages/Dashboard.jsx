@@ -367,14 +367,14 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ label, val, color, icon }) => (
+  const StatCard = ({ label, val, icon }) => (
     <div className="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all group">
       <div className="flex justify-between items-start">
         <div>
            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{label}</p>
-           <p className={`text-3xl font-bold ${color} mt-2 tracking-tight group-hover:scale-105 transition-transform origin-left`}>{val}</p>
+           <p className="text-3xl font-bold text-slate-800 mt-2 tracking-tight group-hover:scale-105 transition-transform origin-left">{val}</p>
         </div>
-        <div className={`p-2 rounded-lg bg-opacity-10 ${color.replace('text-', 'bg-')}`}>
+        <div className="p-2 bg-transparent text-black">
             {icon}
         </div>
       </div>
@@ -407,10 +407,10 @@ const Dashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Total Staff" val={stats.totalEmployees} color="text-slate-800" icon={<Icons.Users />} />
-        <StatCard label="Present Today" val={stats.presentToday} color="text-emerald-600" icon={<Icons.CheckCircle />} />
-        <StatCard label="Absent Today" val={stats.absentToday} color="text-rose-500" icon={<Icons.XCircle />} />
-        <StatCard label="Pending Docs" val={stats.pendingProfiles} color="text-amber-500" icon={<Icons.Alert />} />
+        <StatCard label="Total Staff" val={stats.totalEmployees} icon={<Icons.Users />} />
+        <StatCard label="Present Today" val={stats.presentToday} icon={<Icons.CheckCircle />} />
+        <StatCard label="Absent Today" val={stats.absentToday} icon={<Icons.XCircle />} />
+        <StatCard label="Pending Docs" val={stats.pendingProfiles} icon={<Icons.Alert />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
