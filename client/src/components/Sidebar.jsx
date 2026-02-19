@@ -56,7 +56,7 @@ const Sidebar = () => {
       {/* Brand Header */}
       <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
         <h1 className="text-xl font-extrabold tracking-tighter text-white">
-          NAWAL<span className="text-blue-500">MOTER</span>
+          NAWAL<span className="text-blue-500">MOTOR</span>
         </h1>
       </div>
 
