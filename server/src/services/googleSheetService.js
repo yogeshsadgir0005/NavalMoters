@@ -1,5 +1,5 @@
 const { google } = require("googleapis");
-const Employee = require('../models/Employee'); // Added to fetch salary if missing
+const Employee = require('../models/Employee'); 
 
 const SPREADSHEET_ID =
   process.env.GOOGLE_SHEET_ID ||
@@ -35,6 +35,7 @@ async function getSheetClient() {
   return google.sheets({ version: "v4", auth: client });
 }
 
+// Ensure header exists (Checks A1, updates if empty)
 async function ensureHeader(sheets, tabName, headerRow) {
   try {
     const res = await sheets.spreadsheets.values.get({
@@ -55,37 +56,6 @@ async function ensureHeader(sheets, tabName, headerRow) {
   }
 }
 
-// Helper: Returns 1-based row index if found, else null
-async function findRowIndex(sheets, tabName, criteria) {
-  try {
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${tabName}!A:B`, // Checking Date/Month (Col A) & EmpCode (Col B)
-      valueRenderOption: "FORMATTED_VALUE",
-    });
-
-    const rows = res.data.values;
-    if (!rows || rows.length < 2) return null;
-
-    const targetDate = String(criteria.dateOrMonth).trim();
-    const targetEmp = String(criteria.empCode).trim();
-
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      // Compare Col A and Col B
-      if (
-        String(row[0]).trim() === targetDate && 
-        String(row[1]).trim() === targetEmp
-      ) {
-        return i + 1; // 1-based index
-      }
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
-
 function formatDateOnly(date) {
   if (!date) return "";
   return new Date(date).toISOString().split("T")[0];
@@ -97,58 +67,98 @@ function safeText(val, fallback = "") {
 }
 
 // ------------------------------------------------------------------
-// 1) SYNC ATTENDANCE (Single Record Upsert)
+// 1) BATCH SYNC ATTENDANCE (Instantly handles 1 or 100 records)
 // ------------------------------------------------------------------
-exports.syncAttendance = async (attendanceDoc) => {
+exports.syncAttendance = async (attendanceData) => {
   try {
+    // 1. Normalize input to always be an array
+    const docs = Array.isArray(attendanceData) ? attendanceData : [attendanceData];
+    if (docs.length === 0) return;
+
     const sheets = await getSheetClient();
     const tabName = "Attendance";
-    
     const headers = ["Date", "Emp Code", "Name", "Status", "Shift", "Marked By", "Last Updated"];
     await ensureHeader(sheets, tabName, headers);
 
-    const emp = attendanceDoc.employee;
-    const empCode = safeText(emp?.employeeCode, "N/A");
-    const dateStr = formatDateOnly(attendanceDoc.date);
-    const empName = safeText(emp?.firstName + " " + (emp?.lastName || ""), "Unknown");
-    
-    const rowData = [
-      "'" + dateStr, // Force text format
-      empCode,
-      empName,
-      attendanceDoc.status,
-      attendanceDoc.isNightDuty ? "Night" : "Day",
-      safeText(attendanceDoc.markedBy, "System"),
-      formatDateOnly(new Date()),
-    ];
+    // 2. Fetch existing data ONCE (Massive performance boost)
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${tabName}!A:B`, // Only get Date and EmpCode for matching
+    });
+    const rows = res.data.values || [];
 
-    const rowIndex = await findRowIndex(sheets, tabName, { dateOrMonth: dateStr, empCode });
+    // 3. Build a fast lookup map in memory
+    const rowMap = new Map();
+    for (let i = 1; i < rows.length; i++) {
+      const rDate = String(rows[i][0] || "").trim();
+      const rCode = String(rows[i][1] || "").trim();
+      rowMap.set(`${rDate}_${rCode}`, i + 1); // i + 1 gives actual Google Sheet row number
+    }
 
-    if (rowIndex) {
-      await sheets.spreadsheets.values.update({
+    const updateData = [];
+    const appendData = [];
+
+    // 4. Sort incoming data into "Updates" or "Appends"
+    for (const doc of docs) {
+      const emp = doc.employee || doc;
+      const empCode = safeText(emp?.employeeCode, "N/A");
+      const dateStr = formatDateOnly(doc.date);
+      const empName = safeText(emp?.firstName ? `${emp.firstName} ${emp.lastName}` : (emp?.name || "Unknown"), "Unknown");
+      
+      const rowData = [
+        "'" + dateStr, // Force text format
+        empCode,
+        empName,
+        doc.status,
+        doc.isNightDuty ? "Night" : "Day",
+        safeText(doc.markedBy, "System"),
+        formatDateOnly(new Date()),
+      ];
+
+      const key = `${dateStr}_${empCode}`;
+      if (rowMap.has(key)) {
+        // Exists: Overwrite the specific row
+        const rowIndex = rowMap.get(key);
+        updateData.push({
+          range: `${tabName}!A${rowIndex}:G${rowIndex}`,
+          values: [rowData],
+        });
+      } else {
+        // New: Append to bottom
+        appendData.push(rowData);
+        rowMap.set(key, rows.length + appendData.length); // Prevent duplicates within same batch
+      }
+    }
+
+    // 5. Fire exactly TWO optimized API calls
+    if (updateData.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${tabName}!A${rowIndex}`,
-        valueInputOption: "USER_ENTERED",
-        requestBody: { values: [rowData] },
+        requestBody: { valueInputOption: "USER_ENTERED", data: updateData },
       });
-    } else {
+    }
+
+    if (appendData.length > 0) {
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
         range: `${tabName}!A:G`,
         valueInputOption: "USER_ENTERED",
-        requestBody: { values: [rowData] },
+        requestBody: { values: appendData },
       });
     }
+    
+    console.log(`✅ Attendance synced: ${docs.length} records pushed in bulk.`);
   } catch (error) {
     console.error("Attendance Sync Error:", error.message);
   }
 };
 
 // ------------------------------------------------------------------
-// 2) SYNC PAYROLL (Bulk List Upsert)
+// 2) BATCH SYNC PAYROLL 
 // ------------------------------------------------------------------
 exports.syncPayroll = async (payrollList) => {
   try {
+    if (!payrollList || payrollList.length === 0) return;
     const sheets = await getSheetClient();
     const tabName = "Salary";
 
@@ -159,41 +169,40 @@ exports.syncPayroll = async (payrollList) => {
     ];
     await ensureHeader(sheets, tabName, headers);
 
-    // Process list one by one to check duplicates
-    for (const p of (payrollList || [])) {
-        const emp = p.employee || p; // Handle populated or flat structure
-        
-        const empCode = safeText(
-            emp?.employeeCode ?? emp?.empCode, 
-            "N/A"
-        );
-        const empName = safeText(
-            emp?.firstName ? `${emp.firstName} ${emp.lastName}` : (emp?.name || "Unknown"),
-            "Unknown"
-        );
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${tabName}!A:B`, 
+    });
+    const rows = res.data.values || [];
+
+    const rowMap = new Map();
+    for (let i = 1; i < rows.length; i++) {
+      const rMonth = String(rows[i][0] || "").trim();
+      const rCode = String(rows[i][1] || "").trim();
+      rowMap.set(`${rMonth}_${rCode}`, i + 1);
+    }
+
+    const updateData = [];
+    const appendData = [];
+
+    for (const p of payrollList) {
+        const emp = p.employee || p; 
+        const empCode = safeText(emp?.employeeCode ?? emp?.empCode, "N/A");
+        const empName = safeText(emp?.firstName ? `${emp.firstName} ${emp.lastName}` : (emp?.name || "Unknown"), "Unknown");
         const monthStr = safeText(p.month, "");
 
-        // --- NEW: Robust Salary Fetch Logic ---
-        // 1. Try payload salary
-        // 2. Try populated employee salary
-        // 3. If 0, fetch fresh from DB to be 100% sure
         let finalBaseSalary = p.baseSalary || emp?.baseSalary || 0;
 
         if (finalBaseSalary === 0 && (p.employee || emp._id)) {
             try {
-                // If it's an object use _id, else assume it's an ID string
                 const eId = p.employee?._id || p.employee || emp._id; 
                 const dbEmp = await Employee.findById(eId).select('baseSalary');
-                if (dbEmp && dbEmp.baseSalary) {
-                    finalBaseSalary = dbEmp.baseSalary;
-                }
-            } catch (err) {
-                console.error("Failed to fetch fallback salary:", err.message);
-            }
+                if (dbEmp && dbEmp.baseSalary) finalBaseSalary = dbEmp.baseSalary;
+            } catch (err) {}
         }
 
         const rowData = [
-            "'" + monthStr, // Force text format
+            "'" + monthStr, 
             empCode,
             empName,
             safeText(emp?.department?.name || emp?.department, "-"),
@@ -201,31 +210,41 @@ exports.syncPayroll = async (payrollList) => {
             p.presentDays ?? 0,
             p.incentives ?? 0,
             p.deductions ?? 0,
-            "'" + finalBaseSalary, // FIX: Force text format to prevent "Date" conversion in Sheet
+            "'" + finalBaseSalary, 
             p.netPay ?? 0,
             p.status,
             formatDateOnly(new Date()),
         ];
 
-        const rowIndex = await findRowIndex(sheets, tabName, { dateOrMonth: monthStr, empCode });
-
-        if (rowIndex) {
-            await sheets.spreadsheets.values.update({
-                spreadsheetId: SPREADSHEET_ID,
-                range: `${tabName}!A${rowIndex}`,
-                valueInputOption: "USER_ENTERED",
-                requestBody: { values: [rowData] },
+        const key = `${monthStr}_${empCode}`;
+        if (rowMap.has(key)) {
+            const rowIndex = rowMap.get(key);
+            updateData.push({
+              range: `${tabName}!A${rowIndex}:L${rowIndex}`,
+              values: [rowData],
             });
         } else {
-            await sheets.spreadsheets.values.append({
-                spreadsheetId: SPREADSHEET_ID,
-                range: `${tabName}!A:L`,
-                valueInputOption: "USER_ENTERED",
-                requestBody: { values: [rowData] },
-            });
+            appendData.push(rowData);
+            rowMap.set(key, rows.length + appendData.length);
         }
     }
-    console.log(`✅ Salary synced: ${payrollList.length} records processed`);
+
+    if (updateData.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: { valueInputOption: "USER_ENTERED", data: updateData },
+      });
+    }
+
+    if (appendData.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${tabName}!A:L`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: appendData },
+      });
+    }
+    console.log(`✅ Salary synced: ${payrollList.length} records processed in bulk`);
 
   } catch (error) {
     console.error("Salary Sync Error:", error.message);
@@ -233,10 +252,13 @@ exports.syncPayroll = async (payrollList) => {
 };
 
 // ------------------------------------------------------------------
-// 3) SYNC INCREMENTS (Upsert)
+// 3) BATCH SYNC INCREMENTS
 // ------------------------------------------------------------------
-exports.syncIncrement = async (incrementLog, employee) => {
+exports.syncIncrement = async (incrementData, employee) => {
   try {
+    const logs = Array.isArray(incrementData) ? incrementData : [incrementData];
+    if (logs.length === 0) return;
+
     const sheets = await getSheetClient();
     const tabName = "Increments";
 
@@ -246,37 +268,65 @@ exports.syncIncrement = async (incrementLog, employee) => {
     ];
     await ensureHeader(sheets, tabName, headers);
 
-    const empCode = safeText(employee?.employeeCode, "N/A");
-    const dateStr = formatDateOnly(incrementLog?.date);
-    const empName = safeText(employee?.firstName + " " + (employee?.lastName || ""), "Unknown");
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${tabName}!A:B`,
+    });
+    const rows = res.data.values || [];
 
-    const rowData = [
-      "'" + dateStr, // Force text format
-      empCode,
-      empName,
-      safeText(incrementLog?.type, ""),
-      incrementLog?.amount ?? 0,
-      incrementLog?.previousSalary ?? 0,
-      incrementLog?.newSalary ?? 0,
-      safeText(incrementLog?.reason, ""),
-      formatDateOnly(new Date()),
-    ];
+    const rowMap = new Map();
+    for (let i = 1; i < rows.length; i++) {
+      const rDate = String(rows[i][0] || "").trim();
+      const rCode = String(rows[i][1] || "").trim();
+      rowMap.set(`${rDate}_${rCode}`, i + 1);
+    }
 
-    const rowIndex = await findRowIndex(sheets, tabName, { dateOrMonth: dateStr, empCode });
+    const updateData = [];
+    const appendData = [];
 
-    if (rowIndex) {
-      await sheets.spreadsheets.values.update({
+    for (const incrementLog of logs) {
+      const empCode = safeText(employee?.employeeCode, "N/A");
+      const dateStr = formatDateOnly(incrementLog?.date);
+      const empName = safeText(employee?.firstName ? `${employee.firstName} ${employee.lastName || ""}` : "Unknown");
+
+      const rowData = [
+        "'" + dateStr, 
+        empCode,
+        empName,
+        safeText(incrementLog?.type, ""),
+        incrementLog?.amount ?? 0,
+        incrementLog?.previousSalary ?? 0,
+        incrementLog?.newSalary ?? 0,
+        safeText(incrementLog?.reason, ""),
+        formatDateOnly(new Date()),
+      ];
+
+      const key = `${dateStr}_${empCode}`;
+      if (rowMap.has(key)) {
+        const rowIndex = rowMap.get(key);
+        updateData.push({
+          range: `${tabName}!A${rowIndex}:I${rowIndex}`,
+          values: [rowData],
+        });
+      } else {
+        appendData.push(rowData);
+        rowMap.set(key, rows.length + appendData.length);
+      }
+    }
+
+    if (updateData.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${tabName}!A${rowIndex}`,
-        valueInputOption: "USER_ENTERED",
-        requestBody: { values: [rowData] },
+        requestBody: { valueInputOption: "USER_ENTERED", data: updateData },
       });
-    } else {
+    }
+
+    if (appendData.length > 0) {
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
         range: `${tabName}!A:I`,
         valueInputOption: "USER_ENTERED",
-        requestBody: { values: [rowData] },
+        requestBody: { values: appendData },
       });
     }
   } catch (error) {

@@ -76,12 +76,13 @@ export default function DocUploadCard({
 
   return (
     <>
-      <div className="p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-blue-300 transition-all group">
+      <div className="p-4 md:p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-blue-300 transition-all group">
         <div className="flex items-start justify-between gap-3 mb-4">
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <Icons.File />
-              {title} {required && <span className="text-rose-500 font-black">*</span>}
+              <span className="truncate">{title}</span> 
+              {required && <span className="text-rose-500 font-black shrink-0">*</span>}
             </div>
 
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -91,7 +92,7 @@ export default function DocUploadCard({
                     key={f}
                     type="button"
                     onClick={() => setOpen(true)}
-                    className="px-2 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-white text-[10px] font-bold text-slate-600 truncate max-w-[150px] transition-colors"
+                    className="px-2 py-0.5 rounded-md border border-slate-200 bg-slate-50 hover:bg-white text-[10px] font-bold text-slate-600 truncate max-w-full sm:max-w-[150px] transition-colors"
                     title="Click to preview"
                   >
                     {f}
@@ -107,7 +108,7 @@ export default function DocUploadCard({
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+              className="p-2 shrink-0 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
             >
               <Icons.Eye />
             </button>
@@ -132,21 +133,21 @@ export default function DocUploadCard({
 
       {/* Professional Preview Modal */}
       {open && files.length > 0 && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-4xl rounded-2xl overflow-hidden border border-slate-100 shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white w-full max-w-4xl rounded-2xl overflow-hidden border border-slate-100 shadow-2xl flex flex-col h-[95vh] md:h-auto md:max-h-[90vh]">
             <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
-              <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs flex items-center gap-2">
+              <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs flex items-center gap-2 truncate pr-4">
                 <Icons.Eye /> {title} Preview
               </h3>
               <button
                 onClick={() => setOpen(false)}
-                className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+                className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors shrink-0"
               >
                 <Icons.X />
               </button>
             </div>
 
-            <div className="p-6 space-y-6 overflow-y-auto bg-slate-100">
+            <div className="p-4 md:p-6 space-y-6 overflow-y-auto bg-slate-100 custom-scrollbar">
               {files.map((f) => {
                 const loading = !!loadingMap[f];
                 const err = errorMap[f];
@@ -155,12 +156,12 @@ export default function DocUploadCard({
                 return (
                   <div key={f} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                     <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between gap-4">
-                      <div className="text-xs font-bold text-slate-600 break-all">{f}</div>
+                      <div className="text-[10px] md:text-xs font-bold text-slate-600 break-all">{f}</div>
                       <button
                         type="button"
                         onClick={() => openBlobInNewTab(f)}
                         disabled={!blobUrl}
-                        className={`text-xs font-bold flex items-center gap-1 ${
+                        className={`text-[10px] md:text-xs shrink-0 font-bold flex items-center gap-1 ${
                           blobUrl ? "text-blue-600 hover:text-blue-800" : "text-slate-300 cursor-not-allowed"
                         }`}
                       >
@@ -168,15 +169,15 @@ export default function DocUploadCard({
                       </button>
                     </div>
 
-                    <div className="p-4 bg-slate-50/50 min-h-[200px] flex items-center justify-center">
+                    <div className="p-3 md:p-4 bg-slate-50/50 min-h-[200px] flex items-center justify-center">
                       {loading && <div className="text-xs font-bold text-slate-400 animate-pulse">Decrypting file...</div>}
                       {!loading && err && <div className="text-xs font-bold text-rose-500">Error: {err}</div>}
                       {!loading && !err && blobUrl && (
                         <>
-                          {isImage(f) && <img src={blobUrl} alt={f} className="max-h-[520px] w-full object-contain rounded shadow-sm" />}
-                          {isPdf(f) && <iframe title={f} src={blobUrl} className="w-full h-[520px] rounded border border-slate-200" />}
+                          {isImage(f) && <img src={blobUrl} alt={f} className="max-h-[400px] md:max-h-[520px] w-full object-contain rounded shadow-sm" />}
+                          {isPdf(f) && <iframe title={f} src={blobUrl} className="w-full h-[60vh] md:h-[520px] rounded border border-slate-200" />}
                           {!isImage(f) && !isPdf(f) && (
-                            <div className="text-xs font-medium text-slate-500 bg-white px-4 py-2 rounded border border-slate-200">
+                            <div className="text-[10px] md:text-xs font-medium text-slate-500 bg-white px-4 py-2 rounded border border-slate-200 text-center">
                               Preview not available. Use "Open" button.
                             </div>
                           )}

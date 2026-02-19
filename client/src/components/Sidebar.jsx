@@ -11,9 +11,10 @@ const Icons = {
   Shield: ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
   User: ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
   LogOut: ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>,
+  X: ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,19 +29,20 @@ const Sidebar = () => {
   // Group permissions
   const canAccessManagement = isAdmin || isHR;
 
-  // Updated NavItem to accept Icon Component
+  // NavItem auto-closes the mobile drawer when a link is clicked
   const NavItem = ({ to, label, Icon }) => {
     const isActive = location.pathname === to;
     return (
       <Link 
         to={to} 
+        onClick={() => setIsOpen && setIsOpen(false)}
         className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-200 group ${
           isActive 
             ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' 
             : 'text-slate-400 hover:bg-slate-800 hover:text-white'
         }`}
       >
-        <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'}`} />
+        <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'}`} />
         <span className="font-medium text-sm tracking-wide">{label}</span>
       </Link>
     );
@@ -52,67 +54,85 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-64 h-screen bg-slate-900 text-white fixed flex flex-col shadow-2xl z-20 border-r border-slate-800">
-      {/* Brand Header */}
-      <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
-        <h1 className="text-xl font-extrabold tracking-tighter text-white">
-          NAWAL<span className="text-blue-500">MOTOR</span>
-        </h1>
-      </div>
+    <>
+      {/* Mobile Drawer Overlay - Background dimming */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity" 
+          onClick={() => setIsOpen(false)} 
+        />
+      )}
 
-      {/* Navigation Links */}
-      <nav className="flex-1 py-6 space-y-1 overflow-y-auto custom-scrollbar">
-        {/* 1. MANAGEMENT SECTION (Admin & HR) */}
-        {canAccessManagement && (
-          <>
-            <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-2">
-              Management
-            </div>
-            <NavItem to="/dashboard" label="Dashboard" Icon={Icons.Dashboard} />
-            <NavItem to="/personnel" label="Personnel" Icon={Icons.Users} />
-            <NavItem to="/masters" label="System Settings" Icon={Icons.Settings} />
-            
-            {/* Reports Group */}
-            <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">
-              Reports
-            </div>
-            <NavItem to="/attendance" label="Attendance Logs" Icon={Icons.Calendar} />
-            <NavItem to="/salary-report" label="Salary Reports" Icon={Icons.Money} />
-          </>
-        )}
-
-        {/* 2. ADMIN ONLY SECTION */}
-        {isAdmin && (
-          <>
-            <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">
-              Administration
-            </div>
-            <NavItem to="/admin/users" label="Access Control" Icon={Icons.Shield} />
-          </>
-        )}
+      {/* Sidebar Container */}
+      <div className={`w-64 h-screen bg-slate-900 text-white fixed flex flex-col shadow-2xl z-50 border-r border-slate-800 transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         
-        {/* 3. EMPLOYEE ONLY SECTION (My Space) */}
-        {isEmployee && (
-          <>
-            <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-6">
-              Personal
-            </div>
-            <NavItem to="/myspace" label="My Profile" Icon={Icons.User} />
-          </>
-        )}
-      </nav>
+        {/* Brand Header */}
+        <div className="h-16 md:h-20 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-900 shrink-0">
+          <h1 className="text-xl font-extrabold tracking-tighter text-white">
+            NAWAL<span className="text-blue-500">MOTOR</span>
+          </h1>
+          {/* Close button for Mobile Drawer */}
+          {setIsOpen && (
+            <button onClick={() => setIsOpen(false)} className="md:hidden p-1.5 -mr-2 text-slate-400 hover:text-white rounded-lg transition-colors">
+              <Icons.X className="w-6 h-6" />
+            </button>
+          )}
+        </div>
 
-      {/* Logout Footer */}
-      <div className="p-4 border-t border-slate-800 bg-slate-900">
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all group"
-        >
-          <Icons.LogOut className="w-5 h-5 text-slate-500 group-hover:text-rose-500 transition-colors" />
-          <span className="font-medium text-sm">Sign Out</span>
-        </button>
+        {/* Navigation Links */}
+        <nav className="flex-1 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+          {/* 1. MANAGEMENT SECTION (Admin & HR) */}
+          {canAccessManagement && (
+            <>
+              <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-2">
+                Management
+              </div>
+              <NavItem to="/dashboard" label="Dashboard" Icon={Icons.Dashboard} />
+              <NavItem to="/personnel" label="Personnel" Icon={Icons.Users} />
+              <NavItem to="/masters" label="System Settings" Icon={Icons.Settings} />
+              
+              {/* Reports Group */}
+              <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">
+                Reports
+              </div>
+              <NavItem to="/attendance" label="Attendance Logs" Icon={Icons.Calendar} />
+              <NavItem to="/salary-report" label="Salary Reports" Icon={Icons.Money} />
+            </>
+          )}
+
+          {/* 2. ADMIN ONLY SECTION */}
+          {isAdmin && (
+            <>
+              <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">
+                Administration
+              </div>
+              <NavItem to="/admin/users" label="Access Control" Icon={Icons.Shield} />
+            </>
+          )}
+          
+          {/* 3. EMPLOYEE ONLY SECTION (My Space) */}
+          {isEmployee && (
+            <>
+              <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-6">
+                Personal
+              </div>
+              <NavItem to="/myspace" label="My Profile" Icon={Icons.User} />
+            </>
+          )}
+        </nav>
+
+        {/* Logout Footer */}
+        <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all group"
+          >
+            <Icons.LogOut className="w-5 h-5 shrink-0 text-slate-500 group-hover:text-rose-500 transition-colors" />
+            <span className="font-medium text-sm">Sign Out</span>
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

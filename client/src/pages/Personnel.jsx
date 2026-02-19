@@ -21,9 +21,7 @@ const Icons = {
     strokeLinejoin="round"
   >
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-    
     <path d="M3 3v5h5" />
-    
     <path d="M12 7v5l4 2" />
   </svg>
   };
@@ -48,6 +46,8 @@ const ProgressBar = ({ value }) => (
     <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${Math.min(100, Math.max(0, value || 0))}%` }} />
   </div>
 );
+
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const Personnel = () => {
   const navigate = useNavigate();
@@ -89,10 +89,41 @@ const Personnel = () => {
 
   useEffect(() => { fetchAll(); }, []);
 
+  // FRONTEND PROGRESS CALCULATOR (Strictly isolated from backend boolean flags)
+  const calculateTrueProgress = (emp) => {
+    let steps = 0;
+    
+    // Step 1: Identity & Docs
+    const d = emp.documents || {};
+    if (emp.firstName && emp.phone && emp.bankDetails?.accountNo && d.photo && d.aadhar && d.pan && d.bankProof) {
+        steps += 1;
+    }
+    
+    // Step 2: Family
+    if (emp.family?.motherName && emp.family?.fatherName && emp.family?.maritalStatus) {
+        steps += 1;
+    }
+    
+    // Step 3: Professional 
+    if (emp.department && emp.jobProfile && emp.baseSalary && emp.baseSalary > 0) {
+        steps += 1;
+    }
+    
+    // Step 4: Past History (Only add step 4 if company string exists and isn't empty)
+    if (emp.lastJob && emp.lastJob.company && emp.lastJob.company.trim() !== '') {
+        steps += 1;
+    }
+
+    return (steps / 4) * 100;
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (employees || [])
       .filter(e => {
+        const trueProgress = calculateTrueProgress(e);
+        const isComplete = trueProgress === 100;
+
         const matchesQ =
           !q ||
           `${e.firstName || ''} ${e.lastName || ''}`.toLowerCase().includes(q) ||
@@ -101,8 +132,8 @@ const Personnel = () => {
 
         const matchesStatus =
           statusFilter === 'ALL' ||
-          (statusFilter === 'COMPLETE' && e.isProfileComplete) ||
-          (statusFilter === 'INCOMPLETE' && !e.isProfileComplete);
+          (statusFilter === 'COMPLETE' && isComplete) ||
+          (statusFilter === 'INCOMPLETE' && !isComplete);
 
         return matchesQ && matchesStatus;
       });
@@ -115,7 +146,11 @@ const Personnel = () => {
 
   const createEmployee = async () => {
     setModalError(null);
+    
     if (!form.email.trim()) { setModalError('Corporate Email is required to initialize a new record.'); return; }
+    if (!isValidEmail(form.email.trim())) { setModalError('Please enter a valid Corporate Email address.'); return; }
+    if (form.phone && form.phone.replace(/\D/g, '').length < 10) { setModalError('Phone number must be at least 10 digits.'); return; }
+
     setCreating(true);
     try {
       const res = await API.post('/employees', {
@@ -233,8 +268,8 @@ const Personnel = () => {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filtered.map(emp => {
-                  // FIX: If backend says 100 progress, treat as complete
-                  const isEffectiveComplete = emp.isProfileComplete || emp.profileProgress === 100;
+                  const trueProgress = calculateTrueProgress(emp);
+                  const isEffectiveComplete = trueProgress === 100;
                   
                   return (
                   <tr key={emp._id} className="hover:bg-blue-50/30 transition-colors group">
@@ -249,12 +284,11 @@ const Personnel = () => {
                       <div className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between w-44">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{isEffectiveComplete ? 'Complete' : 'Profile Progress'}</span>
-                            {/* FIX: Show ACTUAL calculated percentage, not hardcoded 35% */}
                             <span className="text-[10px] font-bold text-slate-700">
-                                {isEffectiveComplete ? '100%' : `${emp.profileProgress || 0}%`}
+                                {isEffectiveComplete ? '100%' : `${trueProgress}%`}
                             </span>
                         </div>
-                        <div className="w-44"><ProgressBar value={emp.profileProgress || (isEffectiveComplete ? 100 : 0)} /></div>
+                        <div className="w-44"><ProgressBar value={trueProgress} /></div>
                         <div className="mt-1">{isEffectiveComplete ? <Badge tone="green">Active</Badge> : <Badge tone="amber">Pending Data</Badge>}</div>
                       </div>
                     </td>
@@ -314,11 +348,11 @@ const Personnel = () => {
                 </div>
                 <div className="md:col-span-2 space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Corporate Email <span className="text-rose-500">*</span></label>
-                  <input type="email" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="employee@naWal.com" />
+                  <input type="email" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="employee@nawal.com" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Phone Number</label>
-                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91 00000 00000" />
+                  <input type="text" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^\d+]/g, '') })} placeholder="+910000000000" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">User Type</label>

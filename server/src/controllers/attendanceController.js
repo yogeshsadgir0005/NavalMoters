@@ -24,11 +24,17 @@ exports.markAttendance = async (req, res) => {
         },
         { upsert: true, new: true }
       ).populate('employee', 'firstName lastName employeeCode');
-
-      // 2. Sync to Google Sheet
-      sheetService.syncAttendance(att); 
       
+      // Push the successfully saved record to our batch array
       results.push(att);
+    }
+
+    // 2. Sync to Google Sheet EXACTLY ONCE for the entire batch
+    if (results.length > 0) {
+      // We pass the whole array to the new batch sync function
+      sheetService.syncAttendance(results).catch(err => {
+        console.error("Bulk Sheet Sync Error:", err);
+      });
     }
 
     res.json({ message: `Attendance updated for ${results.length} employees`, data: results });

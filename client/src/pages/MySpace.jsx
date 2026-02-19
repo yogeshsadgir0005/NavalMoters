@@ -3,15 +3,21 @@ import { useEffect, useMemo, useState } from "react";
 import API from "../api/axios";
 
 const Icons = {
-  User: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
-  Bank: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 10V4M11 10V4M15 10V4M19 10V4M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z" /></svg>,
-  Docs: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>,
-  Shield: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
-  History: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  Clock: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  ChevronDown: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
-  ChevronUp: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>,
-  Alert: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+  User: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
+  Bank: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 10V4M11 10V4M15 10V4M19 10V4M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z" /></svg>,
+  Docs: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 11h6M8 15h6m-9 4h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
+  Briefcase: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+  ArrowUp: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>,
+  ArrowDown: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>,
+  File: () => <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+  X: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+  ExternalLink: () => <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+};
+
+const getFileUrl = (filename) => {
+  const baseUrl = API.defaults.baseURL || 'http://localhost:5000/api';
+  const serverUrl = baseUrl.replace(/\/api\/?$/, ''); 
+  return `${serverUrl}/uploads/${filename}`;
 };
 
 const isImage = (name = "") => /\.(png|jpg|jpeg|webp|gif)$/i.test(name);
@@ -23,78 +29,87 @@ const PreviewModal = ({ open, onClose, title, files, employeeId }) => {
   const [errorMap, setErrorMap] = useState({});
 
   useEffect(() => {
-    if (!open || !employeeId) return;
+    if (!open) {
+      Object.values(blobUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
+      setBlobUrlMap({}); setLoadingMap({}); setErrorMap({});
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !files?.length || !employeeId) return;
     let cancelled = false;
 
-    const fetchFile = async (filename) => {
-      if (blobUrlMap[filename]) return;
+    const fetchOne = async (filename) => {
       try {
-        setLoadingMap((p) => ({ ...p, [filename]: true }));
-        setErrorMap((p) => ({ ...p, [filename]: "" }));
+        setLoadingMap(p => ({ ...p, [filename]: true }));
+        setErrorMap(p => ({ ...p, [filename]: "" }));
         const res = await API.get(`/files/employee/${employeeId}/${filename}`, { responseType: "blob" });
         if (cancelled) return;
-        const url = URL.createObjectURL(res.data);
-        setBlobUrlMap((p) => ({ ...p, [filename]: url }));
+        const blobUrl = URL.createObjectURL(res.data);
+        setBlobUrlMap(p => ({ ...p, [filename]: blobUrl }));
       } catch (e) {
         if (cancelled) return;
-        const msg = e?.response?.data?.message || "Failed to securely load file from server.";
-        setErrorMap((p) => ({ ...p, [filename]: msg }));
+        setErrorMap(p => ({ ...p, [filename]: "Failed to load file" }));
       } finally {
         if (cancelled) return;
-        setLoadingMap((p) => ({ ...p, [filename]: false }));
+        setLoadingMap(p => ({ ...p, [filename]: false }));
       }
     };
 
-    (files || []).forEach(fetchFile);
+    files.forEach(f => fetchOne(f));
     return () => { cancelled = true; };
-  }, [open, employeeId, (files || []).join("|")]);
+  }, [open, files, employeeId]);
 
-  useEffect(() => {
-    if (open) return;
-    Object.values(blobUrlMap).forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
-    setBlobUrlMap({}); setLoadingMap({}); setErrorMap({});
-  }, [open]);
-
-  if (!open) return null;
+  if (!open || !files?.length) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-4xl rounded-2xl overflow-hidden border border-slate-200 shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <div className="font-bold text-slate-800 text-sm uppercase tracking-wide">{title} Preview</div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-500">✕</button>
+    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 lg:p-4">
+      <div className="bg-white w-full max-w-4xl rounded-2xl overflow-hidden border border-slate-100 shadow-2xl flex flex-col h-[90vh] lg:h-auto lg:max-h-[90vh]">
+        <div className="p-3 lg:p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+          <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs lg:text-sm flex items-center gap-2 truncate pr-4">
+            <Icons.Docs /> {title}
+          </h3>
+          <button onClick={onClose} className="p-1.5 lg:p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors shrink-0">
+            <Icons.X />
+          </button>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto bg-slate-100">
-          {(files || []).map((f) => {
-            const blobUrl = blobUrlMap[f];
-            const isLoading = !!loadingMap[f];
+        <div className="p-4 lg:p-6 space-y-4 lg:space-y-6 overflow-y-auto bg-slate-100 custom-scrollbar">
+          {files.map(f => {
+            const loading = loadingMap[f];
             const err = errorMap[f];
+            const blobUrl = blobUrlMap[f];
 
             return (
               <div key={f} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
-                  <div className="text-xs font-bold text-slate-600 break-all">{f}</div>
-                  <div className="flex items-center gap-3">
-                    <a className={`text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 ${!blobUrl ? "opacity-50 pointer-events-none" : ""}`} href={blobUrl || "#"} download={f} onClick={(e) => { if (!blobUrl) e.preventDefault(); }}>
-                      <span>Download</span>
-                    </a>
-                    <a className={`text-xs font-bold text-blue-600 hover:text-blue-800 ${!blobUrl ? "opacity-50 pointer-events-none" : ""}`} href={blobUrl || "#"} target="_blank" rel="noreferrer" onClick={(e) => !blobUrl && e.preventDefault()}>
-                      Open Tab
-                    </a>
-                  </div>
+                <div className="px-3 lg:px-4 py-2.5 lg:py-3 bg-white border-b border-slate-100 flex items-center justify-between gap-4">
+                  <div className="text-[10px] lg:text-xs font-bold text-slate-600 break-all">{f}</div>
+                  <button
+                    type="button"
+                    onClick={() => { if(blobUrl) window.open(blobUrl, "_blank", "noopener,noreferrer"); }}
+                    disabled={!blobUrl}
+                    className={`text-[10px] lg:text-xs shrink-0 font-bold flex items-center gap-1 ${
+                      blobUrl ? "text-blue-600 hover:text-blue-800" : "text-slate-300 cursor-not-allowed"
+                    }`}
+                  >
+                    <Icons.ExternalLink /> Open
+                  </button>
                 </div>
 
-                <div className="p-4 flex items-center justify-center min-h-[200px]">
-                  {isLoading && <div className="text-xs font-bold text-slate-400 animate-pulse">Loading...</div>}
-                  {err && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold">
-                        <Icons.Alert /> {err}
-                    </div>
+                <div className="p-3 lg:p-4 bg-slate-50/50 min-h-[150px] lg:min-h-[200px] flex items-center justify-center">
+                  {loading && <div className="text-[10px] lg:text-xs font-bold text-slate-400 animate-pulse">Decrypting file...</div>}
+                  {!loading && err && <div className="text-[10px] lg:text-xs font-bold text-rose-500">Error: {err}</div>}
+                  {!loading && !err && blobUrl && (
+                    <>
+                      {isImage(f) && <img src={blobUrl} alt={f} className="max-h-[40vh] lg:max-h-[600px] w-full object-contain rounded shadow-sm" />}
+                      {isPdf(f) && <iframe title={f} src={blobUrl} className="w-full h-[60vh] lg:h-[600px] rounded border border-slate-200" />}
+                      {!isImage(f) && !isPdf(f) && (
+                        <div className="text-[10px] lg:text-xs font-medium text-slate-500 bg-white px-3 lg:px-4 py-1.5 lg:py-2 rounded border border-slate-200">
+                          Preview not available. Use "Open" button.
+                        </div>
+                      )}
+                    </>
                   )}
-                  {!isLoading && !err && isImage(f) && blobUrl && <img src={blobUrl} alt={f} className="max-h-[520px] w-full object-contain rounded" />}
-                  {!isLoading && !err && isPdf(f) && blobUrl && <iframe title={f} src={blobUrl} className="w-full h-[520px] rounded border border-slate-200" />}
-                  {!isLoading && !err && !isImage(f) && !isPdf(f) && <div className="text-xs text-slate-500 bg-slate-50 px-4 py-2 rounded">Preview not supported. Use Download.</div>}
                 </div>
               </div>
             );
@@ -105,152 +120,73 @@ const PreviewModal = ({ open, onClose, title, files, employeeId }) => {
   );
 };
 
-const prettyLabel = (key) => {
-  const map = {
-    aadhar: "Aadhar Card", pan: "PAN Card", photo: "Profile Photo", dl: "Driving License",
-    appHindi: "Application (Hindi)", appEnglish: "Application (English)", certificates: "Certificates", otherKyc: "Other KYC Docs",
-  };
-  return map[key] || key;
-};
-
-const HistoryRow = ({ adjustments }) => {
-    if(!adjustments || adjustments.length === 0) return (
-        <tr className="bg-slate-50 border-b border-slate-100"><td colSpan="7" className="p-4 text-center text-xs text-slate-400 italic">No adjustments recorded for this month.</td></tr>
-    );
-    return (
-        <tr className="bg-slate-50 border-b border-slate-200">
-            <td colSpan="7" className="p-4">
-                <div className="bg-white border border-slate-200 rounded-lg p-3 max-w-3xl mx-auto shadow-inner">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                        <Icons.History /> Adjustment History
-                    </p>
-                    <table className="w-full text-left">
-                        <tbody className="divide-y divide-slate-100">
-                            {adjustments.map((adj, i) => (
-                                <tr key={adj._id || adj.id || `${adj.type}-${adj.date}-${i}`}>
-                                    <td className="py-1 text-xs font-bold text-slate-600 w-24">
-                                        <span className={`px-1.5 py-0.5 rounded border ${adj.type === 'Incentive' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'}`}>
-                                            {adj.type}
-                                        </span>
-                                    </td>
-                                    <td className="py-1 text-xs text-slate-700">{adj.reason}</td>
-                                    <td className="py-1 text-[10px] text-slate-400 text-right">
-                                        {new Date(adj.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                    </td>
-                                    <td className={`py-1 text-xs font-bold text-right w-24 ${adj.type === 'Incentive' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        {adj.type === 'Incentive' ? '+' : '-'} ₹{adj.amount}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </td>
-        </tr>
-    );
-};
-
 const MySpace = () => {
-  const [data, setData] = useState(null);
+  const [emp, setEmp] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('self');
   const [pageError, setPageError] = useState(null);
-  
-  const [activeTab, setActiveTab] = useState('personal'); 
-  const [salaryHistory, setSalaryHistory] = useState([]); 
-  const [expandedRecords, setExpandedRecords] = useState({});
 
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewTitle, setPreviewTitle] = useState("Document");
+  const [previewTitle, setPreviewTitle] = useState("");
   const [previewFiles, setPreviewFiles] = useState([]);
-  const [thumbUrls, setThumbUrls] = useState({});
-
-  const load = async () => {
-    try {
-      setPageError(null);
-      const res = await API.get("/employees/me");
-      setData(res.data);
-    } catch(e) { 
-      setPageError(e.response?.data?.message || "Failed to securely connect to your profile. Please try reloading the page.");
-    }
-  };
-
-  useEffect(() => { load(); }, []);
+  const [employeeId, setEmployeeId] = useState(null);
 
   useEffect(() => {
-    if (data?._id) {
-        loadSalaryHistory(data._id);
-    }
-  }, [data]);
-
-  const loadSalaryHistory = async (id) => {
-      try {
-          const { data: hist } = await API.get('/salary/history');
-          const myHistory = hist.filter(s => s.employee?._id === id || s.employee === id);
-          setSalaryHistory(myHistory);
-      } catch (e) {
-          console.error("Failed to load salary history");
-      }
-  };
-
-  const toggleRecordExpand = (recId) => {
-    setExpandedRecords(prev => ({ ...prev, [recId]: !prev[recId] }));
-  };
-
-  const employeeId = data?._id || data?.id;
-
-  useEffect(() => {
-    if(!data || !employeeId) return;
-    const docs = data.documents || {};
-    const entries = Object.entries(docs).filter(([_, v]) => v && (Array.isArray(v) ? v.length > 0 : true));
-    
-    entries.forEach(async ([_, value]) => {
-       const files = Array.isArray(value) ? value : [value];
-       const firstFile = files[0];
-       if(isImage(firstFile) && !thumbUrls[firstFile]) {
-          try {
-             const res = await API.get(`/files/employee/${employeeId}/${firstFile}`, { responseType: 'blob' });
-             const url = URL.createObjectURL(res.data);
-             setThumbUrls(prev => ({...prev, [firstFile]: url}));
-          } catch(e) { console.error("Failed thumb load", firstFile); }
-       }
-    });
-    return () => { Object.values(thumbUrls).forEach(u => URL.revokeObjectURL(u)); };
-  }, [data, employeeId]); 
-
-  const firstFilePreview = (filename) => {
-    if (!filename) return null;
-    if (isImage(filename)) {
-      if(thumbUrls[filename]) {
-        return <img src={thumbUrls[filename]} alt={filename} className="mt-3 h-28 w-full object-cover rounded-xl border border-slate-200 shadow-sm" loading="lazy" />;
-      }
-      return <div className="mt-3 h-28 w-full rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-400 animate-pulse">Loading...</div>;
-    }
-    if (isPdf(filename)) {
-      return (
-        <div className="mt-3 h-28 w-full rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">PDF Document</span>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const Row = ({ label, value }) => (
-    <div className="flex justify-between items-center border-b border-slate-50 py-3.5 group">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">{label}</span>
-      <span className="font-bold text-slate-800 text-sm">{value || "—"}</span>
-    </div>
-  );
+    API.get('/employees/me')
+      .then(res => {
+          setEmp(res.data);
+          setEmployeeId(res.data._id);
+      })
+      .catch(err => setPageError("Failed to load your profile."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const documentCards = useMemo(() => {
-    const docs = data?.documents || {};
-    const entries = Object.entries(docs).filter(([_, v]) => v && (Array.isArray(v) ? v.length > 0 : true));
-    return entries.map(([key, value]) => ({ key, title: prettyLabel(key), files: Array.isArray(value) ? value : [value] }));
-  }, [data]);
+    if (!emp?.documents) return [];
+    const docs = emp.documents;
+    const cards = [];
+
+    const addCard = (key, title) => {
+        if (!docs[key]) return;
+        const files = Array.isArray(docs[key]) ? docs[key] : [docs[key]];
+        if (files.length > 0) cards.push({ key, title, files });
+    };
+
+    addCard('aadhar', 'Aadhar Card');
+    addCard('pan', 'PAN Card');
+    addCard('bankProof', 'Bank Proof');
+    addCard('dl', 'Driving License');
+    addCard('appHindi', 'Application (Hindi)');
+    addCard('appEnglish', 'Application (English)');
+    addCard('certificates', 'Certificates');
+    addCard('otherKyc', 'Other KYC');
+
+    return cards;
+  }, [emp]);
+
+  if (loading) return (
+      <Layout>
+          <div className="flex h-[80vh] items-center justify-center flex-col gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-100 border-t-blue-600"></div>
+              <span className="text-slate-400 text-sm font-medium">Loading My Space...</span>
+          </div>
+      </Layout>
+  );
+
+  if (pageError || !emp) return (
+      <Layout>
+          <div className="flex h-[80vh] items-center justify-center">
+              <div className="text-rose-500 font-bold bg-rose-50 px-6 py-4 rounded-xl border border-rose-100">
+                  {pageError || "Profile not found."}
+              </div>
+          </div>
+      </Layout>
+  );
 
   const TabButton = ({ id, label, Icon }) => (
     <button 
       onClick={() => setActiveTab(id)}
-      className={`px-5 py-3 font-bold text-sm flex items-center gap-2 border-b-2 transition-all ${
+      className={`px-4 lg:px-6 py-3 lg:py-4 font-bold text-xs lg:text-sm flex items-center gap-2 border-b-2 transition-all whitespace-nowrap shrink-0 ${
         activeTab === id 
         ? 'border-blue-600 text-blue-700' 
         : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200'
@@ -260,159 +196,214 @@ const MySpace = () => {
     </button>
   );
 
-  if (!data) {
-    return (
-        <Layout>
-            {pageError ? (
-                <div className="flex h-[70vh] items-center justify-center p-8">
-                    <div className="bg-rose-50 border border-rose-200 text-rose-700 px-6 py-5 rounded-2xl flex flex-col items-center max-w-sm text-center shadow-sm">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-rose-500 mb-3 shadow-sm border border-rose-100">
-                            <Icons.Alert />
-                        </div>
-                        <h4 className="font-bold text-rose-900 text-base">Connection Error</h4>
-                        <p className="text-sm mt-1 mb-5">{pageError}</p>
-                        <button onClick={load} className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold shadow-md shadow-rose-200 transition-all active:scale-95">
-                            Retry Connection
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <div className="p-20 text-center text-slate-400 text-sm font-bold uppercase tracking-widest animate-pulse">Loading Profile...</div>
-            )}
-        </Layout>
-    );
-  }
+  const InfoRow = ({ label, val }) => (
+    <div className="flex flex-col border-b border-slate-50 py-2 lg:py-3 last:border-0 hover:bg-slate-50/50 transition-colors px-1 lg:px-2 rounded">
+      <span className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 lg:mb-1">{label}</span>
+      <span className="font-semibold text-slate-800 text-xs lg:text-sm break-words">{val || '—'}</span>
+    </div>
+  );
+
+  const firstFilePreview = (filename) => {
+      const ext = filename.split('.').pop().toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+          return (
+              <div className="h-20 lg:h-32 bg-slate-50 border-b border-slate-100 flex items-center justify-center p-2 lg:p-4 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                      <span className="text-white text-[9px] lg:text-[10px] font-bold uppercase tracking-wider">Preview</span>
+                  </div>
+                  <img src={getFileUrl(filename)} alt="preview" className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-transform group-hover:scale-105" />
+              </div>
+          );
+      }
+      return (
+          <div className="h-20 lg:h-32 bg-slate-50 border-b border-slate-100 flex flex-col items-center justify-center relative overflow-hidden group text-slate-300">
+               <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                  <span className="text-slate-700 text-[9px] lg:text-[10px] font-bold uppercase tracking-wider bg-white/80 px-2 py-1 rounded backdrop-blur-sm">View Document</span>
+              </div>
+              <Icons.Docs />
+              <span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest mt-1 lg:mt-2 text-slate-400">{ext} Document</span>
+          </div>
+      );
+  };
 
   return (
     <Layout>
-      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm mb-6 flex flex-col md:flex-row items-center gap-6">
-        <div className="h-20 w-20 rounded-2xl bg-slate-900 flex items-center justify-center font-bold text-white text-3xl shadow-xl border border-slate-800">
-            {(data.firstName?.[0] || "U").toUpperCase()}
-        </div>
-        <div className="text-center md:text-left flex-1">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{data.firstName} {data.lastName}</h1>
-            <p className="text-blue-600 font-bold text-xs uppercase tracking-widest mt-1">
-              {data.jobProfile?.name || "No Role"} <span className="text-slate-300 mx-2">•</span> {data.department?.name || "No Dept"}
-            </p>
-        </div>
-        <div className={`px-4 py-2 rounded-xl border font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 ${
-            data.isProfileComplete ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-        }`}>
-            <Icons.Shield /> {data.isProfileComplete ? "Compliance Active" : "Action Required"}
-        </div>
+      <div className="flex items-center gap-2 lg:gap-3 mb-6 lg:mb-8">
+          <div className="p-1.5 lg:p-2 bg-white border border-slate-200 rounded-lg shadow-sm text-blue-600">
+              <Icons.User />
+          </div>
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">My Space</h1>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px] flex flex-col">
-        <div className="flex border-b border-slate-200 px-2 overflow-x-auto">
-            <TabButton id="personal" label="Profile" Icon={Icons.User} />
-            <TabButton id="payments" label="Payment History" Icon={Icons.Clock} />
-            <TabButton id="docs" label="Documents" Icon={Icons.Docs} />
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+        
+        <div className="w-full lg:w-80 shrink-0">
+            <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-200 p-4 lg:p-6 lg:sticky lg:top-8">
+                <div className="flex flex-col items-center text-center">
+                    <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center text-xl lg:text-2xl font-bold text-slate-500 overflow-hidden border-4 border-white shadow-md ring-1 ring-slate-100 mb-3 lg:mb-4">
+                        {emp.documents?.photo ? (
+                            <img src={getFileUrl(emp.documents.photo)} className="w-full h-full object-cover" alt="Profile"/>
+                        ) : (
+                            <span>{emp.firstName?.[0]}</span>
+                        )}
+                    </div>
+                    <h2 className="text-lg lg:text-xl font-bold text-slate-900 tracking-tight leading-tight">{emp.firstName} {emp.lastName}</h2>
+                    <p className="text-[10px] lg:text-xs font-bold text-blue-600 uppercase tracking-widest mt-1">{emp.jobProfile?.name || 'Employee'}</p>
+                    <p className="text-xs lg:text-sm text-slate-500 font-medium mt-0.5">{emp.department?.name || 'Unassigned Department'}</p>
+                    
+                    <div className="mt-4 lg:mt-6 w-full space-y-2 lg:space-y-3 bg-slate-50 p-3 lg:p-4 rounded-xl border border-slate-100 text-left">
+                        <div className="flex justify-between items-center text-[10px] lg:text-xs">
+                            <span className="font-bold text-slate-500 uppercase tracking-wider">Emp Code</span>
+                            <span className="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200">{emp.employeeCode}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] lg:text-xs">
+                            <span className="font-bold text-slate-500 uppercase tracking-wider">Status</span>
+                            <span className={`px-2 py-0.5 rounded font-bold uppercase border ${
+                                emp.isProfileComplete 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                                : 'bg-amber-50 text-amber-700 border-amber-100'
+                            }`}>
+                                {emp.isProfileComplete ? 'Complete' : 'Pending Data'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div className="p-8">
+        <div className="flex-1 min-w-0 bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-200 overflow-hidden min-h-[500px] lg:min-h-[600px] flex flex-col">
             
-            {activeTab === 'personal' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-300">
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                        <div className="flex items-center gap-2 mb-6 text-slate-800">
-                            <Icons.User /> <h3 className="font-bold text-sm uppercase tracking-widest">Personal Records</h3>
-                        </div>
-                        <Row label="Email" value={data.email} />
-                        <Row label="Phone" value={data.phone} />
-                        <Row label="System ID" value={data.employeeCode} />
-                    </div>
+            <div className="flex border-b border-slate-200 px-2 overflow-x-auto whitespace-nowrap custom-scrollbar">
+                <TabButton id="self" label="Personal & Family" Icon={Icons.User} />
+                <TabButton id="job" label="Professional" Icon={Icons.Briefcase} />
+                <TabButton id="financial" label="Financials" Icon={Icons.Bank} />
+                <TabButton id="docs" label="My Documents" Icon={Icons.Docs} />
+            </div>
 
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                        <div className="flex items-center gap-2 mb-6 text-slate-800">
-                            <Icons.Bank /> <h3 className="font-bold text-sm uppercase tracking-widest">Bank Settlement Info</h3>
-                        </div>
-                        <Row label="Account Number" value={data.bankDetails?.accountNo} />
-                        <Row label="IFSC Code" value={data.bankDetails?.ifsc} />
-                        <Row label="Bank Name" value={data.bankDetails?.bankName} />
+            {activeTab === 'self' && (
+                <div className="p-4 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-6 lg:gap-x-12 gap-y-6 lg:gap-y-8 animate-in fade-in duration-300">
+                    <div className="space-y-1">
+                        <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
+                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Contact Details
+                        </h3>
+                        <InfoRow label="Email Address" val={emp.email} />
+                        <InfoRow label="Phone Number" val={emp.phone} />
+                        <InfoRow label="Date of Birth" val={emp.dob ? new Date(emp.dob).toLocaleDateString('en-IN') : '-'} />
+                        <InfoRow label="Residential Address" val={emp.address} />
+                    </div>
+                    <div className="space-y-1">
+                        <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
+                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Family Details
+                        </h3>
+                        <InfoRow label="Mother's Name" val={emp.family?.motherName} />
+                        <InfoRow label="Father's Name" val={emp.family?.fatherName} />
+                        <InfoRow label="Marital Status" val={emp.family?.maritalStatus} />
+                        <InfoRow label="Spouse Name" val={emp.family?.spouseName} />
                     </div>
                 </div>
             )}
 
-            {activeTab === 'payments' && (
-                <div className="animate-in fade-in duration-300">
-                    <h3 className="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
-                        <span className="w-1 h-4 bg-blue-600 rounded-full"></span> Monthly Payment Ledger
+            {activeTab === 'job' && (
+                <div className="p-4 lg:p-8 animate-in fade-in duration-300">
+                    <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
+                        <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Previous Employment
                     </h3>
-                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-widest border-b border-slate-200">
-                                <tr>
-                                    <th className="px-4 py-3">Period</th>
-                                    <th className="px-4 py-3">Processed On</th>
-                                    <th className="px-4 py-3 text-center">Duty Cycle</th>
-                                    <th className="px-4 py-3 text-right">Incentives</th>
-                                    <th className="px-4 py-3 text-right">Net Paid</th>
-                                    <th className="px-4 py-3 text-center">Status</th>
-                                    <th className="px-4 py-3 text-right">History</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {salaryHistory.length > 0 ? salaryHistory.map((sal) => {
-                                    const isExpanded = expandedRecords[sal._id];
-                                    return (
-                                        <div key={sal._id} className="contents">
-                                            <tr 
-                                                className={`hover:bg-slate-50 transition-colors cursor-pointer ${isExpanded ? 'bg-slate-50' : ''}`}
-                                                onClick={() => toggleRecordExpand(sal._id)}
-                                            >
-                                                <td className="px-4 py-3 text-sm font-bold text-blue-700">{sal.month}</td>
-                                                <td className="px-4 py-3 text-xs text-slate-500">{new Date(sal.updatedAt).toLocaleDateString('en-IN')}</td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{sal.presentDays} Days</span>
-                                                </td>
-                                                <td className={`px-4 py-3 text-right text-xs font-bold ${sal.incentives >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                    {sal.incentives > 0 ? '+' : ''}₹{sal.incentives.toLocaleString()}
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-sm font-bold text-slate-900 font-mono">₹{sal.netPay.toLocaleString()}</td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                                        sal.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
-                                                        sal.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                        'bg-amber-50 text-amber-700 border-amber-100'
-                                                    }`}>
-                                                        {sal.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <button className="text-slate-400 hover:text-blue-600">
-                                                        {isExpanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            {isExpanded && <HistoryRow adjustments={sal.adjustments} />}
-                                        </div>
-                                    );
-                                }) : (
-                                    <tr><td colSpan="7" className="p-8 text-center text-slate-400 text-xs italic">No payment history found.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
+                    {emp.lastJob?.company ? (
+                        <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 lg:p-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+                                <InfoRow label="Company / Organization" val={emp.lastJob.company} />
+                                <InfoRow label="Designation" val={emp.lastJob.role} />
+                                <InfoRow label="Duration" val={emp.lastJob.duration} />
+                                <InfoRow label="Reason for Leaving" val={emp.lastJob.reason} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-8 lg:p-12 text-center border-2 border-dashed border-slate-200 rounded-xl">
+                            <p className="text-slate-400 text-xs lg:text-sm font-medium italic">No past employment history recorded.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'financial' && (
+                <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 animate-in fade-in duration-300">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800 p-4 lg:p-6 rounded-xl shadow-lg text-white relative overflow-hidden">
+                        <div className="relative z-10">
+                            <span className="text-slate-300 text-[9px] lg:text-[10px] font-bold uppercase tracking-widest">Base Salary Setup</span>
+                            <div className="flex items-baseline gap-2 mt-1">
+                                <p className="text-2xl lg:text-3xl font-bold tracking-tight">₹{emp.baseSalary?.toLocaleString()}</p>
+                                <span className="px-2 py-0.5 bg-white/10 rounded text-[9px] lg:text-[10px] font-bold uppercase tracking-wider text-slate-200 border border-white/10">
+                                    {emp.wageType} Wage
+                                </span>
+                            </div>
+                        </div>
+                        <div className="relative z-10 mt-3 md:mt-0 text-left md:text-right">
+                            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
+                            <p className="font-bold text-xs lg:text-sm">{emp.bankDetails?.bankName || 'Not Provided'}</p>
+                        </div>
+                        <div className="absolute right-0 top-0 h-full w-64 bg-white/5 skew-x-12 translate-x-10"></div>
+                    </div>
+                    
+                    <div>
+                        <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
+                            <span className="w-1 h-3 lg:h-4 bg-slate-300 rounded-full"></span> Increment History
+                        </h3>
+                        <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
+                            <table className="w-full text-left min-w-[500px]">
+                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[9px] lg:text-[10px] tracking-widest border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-3 lg:px-4 py-2 lg:py-3">Date</th>
+                                        <th className="px-3 lg:px-4 py-2 lg:py-3">Action</th>
+                                        <th className="px-3 lg:px-4 py-2 lg:py-3">Adjustment</th>
+                                        <th className="px-3 lg:px-4 py-2 lg:py-3">New Salary</th>
+                                        <th className="px-3 lg:px-4 py-2 lg:py-3 w-1/3">Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {emp.increments?.length > 0 ? [...emp.increments].reverse().map((inc, i) => (
+                                        <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-3 lg:px-4 py-2 lg:py-3 text-slate-600 text-[10px] lg:text-xs font-medium whitespace-nowrap">
+                                                {new Date(inc.date).toLocaleDateString('en-IN')}
+                                            </td>
+                                            <td className="px-3 lg:px-4 py-2 lg:py-3">
+                                                <span className={`inline-flex items-center gap-1 px-1.5 lg:px-2 py-0.5 rounded text-[9px] lg:text-[10px] font-bold uppercase border ${
+                                                    inc.type === 'Increment' 
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                                                    : 'bg-rose-50 text-rose-700 border-rose-100'
+                                                }`}>
+                                                    {inc.type === 'Increment' ? <Icons.ArrowUp /> : <Icons.ArrowDown />}
+                                                    {inc.type}
+                                                </span>
+                                            </td>
+                                            <td className={`px-3 lg:px-4 py-2 lg:py-3 text-[10px] lg:text-xs font-bold whitespace-nowrap ${inc.type === 'Increment' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                {inc.type === 'Increment' ? '+' : '-'} ₹{inc.amount.toLocaleString()}
+                                            </td>
+                                            <td className="px-3 lg:px-4 py-2 lg:py-3 text-[10px] lg:text-xs font-bold text-slate-800 whitespace-nowrap">₹{inc.newSalary.toLocaleString()}</td>
+                                            <td className="px-3 lg:px-4 py-2 lg:py-3 text-[10px] lg:text-xs text-slate-500 italic break-words min-w-[150px]">{inc.reason}</td>
+                                        </tr>
+                                    )) : (
+                                        <tr><td colSpan="5" className="p-6 lg:p-8 text-center text-slate-400 text-[10px] lg:text-xs italic">No structural changes recorded.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
 
             {activeTab === 'docs' && (
-                <div className="animate-in fade-in duration-300">
-                    <div className="flex items-center gap-2 mb-6 text-slate-800">
-                        <Icons.Docs /> <h3 className="font-bold text-sm uppercase tracking-widest">Secure Documents</h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {documentCards.map((d) => (
-                            <div key={d.key} className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all group">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                        <div className="text-xs font-bold text-slate-800 uppercase tracking-wide">{d.title}</div>
-                                        <div className="text-[10px] text-slate-400 mt-1 font-medium">{d.files.length} File(s)</div>
+                <div className="p-4 lg:p-8 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-6">
+                        {documentCards.map((d, i) => (
+                            <div key={i} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                                <div className="p-2.5 lg:p-4 flex items-start justify-between gap-2">
+                                    <div className="min-w-0 pr-1">
+                                        <div className="text-[10px] lg:text-xs font-bold text-slate-800 uppercase tracking-wide truncate">{d.title}</div>
+                                        <div className="text-[9px] lg:text-[10px] text-slate-400 mt-0.5 lg:mt-1 font-medium">{d.files.length} File(s)</div>
                                     </div>
                                     <button
                                         onClick={() => { setPreviewTitle(d.title); setPreviewFiles(d.files); setPreviewOpen(true); }}
-                                        className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold hover:bg-blue-600 hover:text-white transition-all"
+                                        className="px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[9px] lg:text-[10px] font-bold hover:bg-blue-600 hover:text-white transition-all shrink-0"
                                     >
                                         View
                                     </button>
@@ -421,7 +412,7 @@ const MySpace = () => {
                             </div>
                         ))}
                     </div>
-                    {documentCards.length === 0 && <div className="text-xs text-slate-400 italic p-4 text-center">No documents uploaded.</div>}
+                    {documentCards.length === 0 && <div className="text-[10px] lg:text-xs text-slate-400 italic p-4 text-center">No documents uploaded.</div>}
                 </div>
             )}
 

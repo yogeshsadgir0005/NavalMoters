@@ -22,7 +22,6 @@ const AttendanceLog = () => {
   const [attendanceData, setAttendanceData] = useState({ employeeId: '', status: 'Present', date: new Date().toISOString().slice(0,10), isNightDuty: false });
   const [attendanceError, setAttendanceError] = useState(null);
   
-  // New States for Modal Logic
   const [selectedIds, setSelectedIds] = useState([]);
   const [dailyStatusMap, setDailyStatusMap] = useState({});
 
@@ -30,7 +29,6 @@ const AttendanceLog = () => {
     fetchData();
   }, [selectedMonth]);
 
-  // Effect to load daily status for modal
   useEffect(() => {
     if (showAttendanceModal) {
       fetchDailyStatus();
@@ -63,7 +61,7 @@ const AttendanceLog = () => {
         }
       });
       setDailyStatusMap(map);
-    } catch (e) { console.error("Failed to fetch daily logs"); }
+    } catch (e) {}
   };
 
   const sortedEmployees = useMemo(() => {
@@ -102,7 +100,7 @@ const AttendanceLog = () => {
       setShowAttendanceModal(false);
       setAttendanceData({ status: 'Present', date: new Date().toISOString().slice(0,10), isNightDuty: false });
       setSelectedIds([]);
-      fetchData(); // Refresh main logs
+      fetchData();
     } catch (e) {
       const backendError = e.response?.data?.message || '';
       setAttendanceError(backendError || 'An unexpected error occurred while saving attendance.');
@@ -144,7 +142,7 @@ const AttendanceLog = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-5 gap-3">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 md:gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-white border border-slate-200 rounded-lg shadow-sm text-blue-600">
              <Icons.Clock />
@@ -155,10 +153,10 @@ const AttendanceLog = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             <button 
                 onClick={() => { setShowAttendanceModal(true); setAttendanceError(null); }}
-                className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
+                className="flex justify-center items-center gap-2 px-4 py-2 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
             >
                 <Icons.CheckCircle /> Mark Attendance
             </button>
@@ -171,7 +169,7 @@ const AttendanceLog = () => {
                 type="month" 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="pl-8 pr-2 py-1.5 h-8 border border-slate-200 rounded bg-white font-semibold text-slate-700 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none hover:border-blue-300 transition-all text-xs cursor-pointer w-40"
+                className="pl-8 pr-2 py-2 sm:py-1.5 h-auto sm:h-8 border border-slate-200 rounded bg-white font-semibold text-slate-700 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none hover:border-blue-300 transition-all text-xs cursor-pointer w-full sm:w-40"
                 />
             </div>
         </div>
@@ -179,12 +177,12 @@ const AttendanceLog = () => {
 
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
         
-        <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center gap-4 text-[10px] font-medium text-slate-500">
-            <span className="font-bold text-slate-700 uppercase tracking-wider">Legend:</span>
+        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center gap-2 md:gap-4 text-[10px] font-medium text-slate-500">
+            <span className="font-bold text-slate-700 uppercase tracking-wider w-full md:w-auto mb-1 md:mb-0">Legend:</span>
             <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Present</span>
             <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Absent</span>
             <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Half Day</span>
-            <span className="flex items-center gap-1 ml-2 border-l border-slate-200 pl-4"><span className="w-2.5 h-2.5 rounded-sm bg-slate-800"></span> Night Duty</span>
+            <span className="flex items-center gap-1 ml-0 md:ml-2 border-l-0 md:border-l border-slate-200 pl-0 md:pl-4"><span className="w-2.5 h-2.5 rounded-sm bg-slate-800"></span> Night Duty</span>
         </div>
 
         <div className="overflow-x-auto custom-scrollbar">
@@ -258,16 +256,16 @@ const AttendanceLog = () => {
 
       {showAttendanceModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-white px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+          <div className="bg-white rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
+            <div className="bg-white px-4 md:px-6 py-3 md:py-4 border-b border-slate-100 flex justify-between items-center">
                  <div>
-                    <h3 className="text-lg font-bold text-slate-800">Mark Bulk Attendance</h3>
-                    <p className="text-xs text-slate-500">Select employees for <span className="font-bold text-blue-600">{new Date(attendanceData.date).toLocaleDateString('en-IN')}</span></p>
+                    <h3 className="text-base md:text-lg font-bold text-slate-800">Mark Bulk Attendance</h3>
+                    <p className="text-[10px] md:text-xs text-slate-500">Select employees for <span className="font-bold text-blue-600">{new Date(attendanceData.date).toLocaleDateString('en-IN')}</span></p>
                  </div>
                  <button onClick={() => { setShowAttendanceModal(false); setAttendanceError(null); }} className="text-slate-400 hover:text-slate-600"><Icons.XCircle /></button>
             </div>
             
-            <form onSubmit={handleAttendance} className="p-6 overflow-hidden flex flex-col flex-1">
+            <form onSubmit={handleAttendance} className="p-4 md:p-6 overflow-hidden flex flex-col flex-1">
               {attendanceError && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm mb-4">
                     <p className="font-bold text-xs uppercase">Error</p>
@@ -275,7 +273,7 @@ const AttendanceLog = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
                     <input type="date" className="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm" value={attendanceData.date} onChange={e => setAttendanceData({...attendanceData, date: e.target.value})} />
@@ -293,7 +291,7 @@ const AttendanceLog = () => {
                   </div>
               </div>
 
-              <div className="flex justify-between items-end mb-2">
+              <div className="flex justify-between items-end mb-2 mt-2 md:mt-0">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Select Employees</label>
                   <button type="button" onClick={toggleSelectAll} className="text-xs font-bold text-blue-600 hover:text-blue-800">
                     {selectedIds.length === employees.length ? 'Deselect All' : 'Select All'}
@@ -307,18 +305,18 @@ const AttendanceLog = () => {
                       
                       return (
                         <div key={emp._id} onClick={() => toggleEmployee(emp._id)} 
-                             className={`flex items-center gap-3 px-4 py-2.5 border-b border-slate-100 last:border-0 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50' : 'hover:bg-white'}`}>
-                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-300'}`}>
+                             className={`flex items-center gap-3 px-3 md:px-4 py-2.5 border-b border-slate-100 last:border-0 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50' : 'hover:bg-white'}`}>
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-300'}`}>
                                 {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                             </div>
-                            <div className="flex-1 flex justify-between items-center">
-                                <div>
-                                    <p className={`text-sm font-semibold ${isSelected ? 'text-blue-800' : 'text-slate-700'}`}>{emp.firstName} {emp.lastName}</p>
-                                    <p className="text-[10px] text-slate-500">{emp.employeeCode} • {emp.department?.name || 'No Dept'}</p>
+                            <div className="flex-1 flex justify-between items-center min-w-0">
+                                <div className="truncate pr-2">
+                                    <p className={`text-xs md:text-sm font-semibold truncate ${isSelected ? 'text-blue-800' : 'text-slate-700'}`}>{emp.firstName} {emp.lastName}</p>
+                                    <p className="text-[10px] text-slate-500 truncate">{emp.employeeCode} • {emp.department?.name || 'No Dept'}</p>
                                 </div>
                                 {currentStatus && (
-                                    <div className="text-right">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                    <div className="text-right shrink-0">
+                                        <span className={`text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded border ${
                                             currentStatus.status === 'Present' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                             currentStatus.status === 'Absent' ? 'bg-rose-50 text-rose-600 border-rose-100' :
                                             'bg-amber-50 text-amber-600 border-amber-100'
@@ -326,7 +324,7 @@ const AttendanceLog = () => {
                                             {currentStatus.status}
                                         </span>
                                         {currentStatus.isNightDuty && (
-                                            <span className="block text-[9px] text-slate-400 mt-0.5"><Icons.Moon /> Night</span>
+                                            <span className="flex items-center justify-end gap-1 text-[8px] md:text-[9px] text-slate-400 mt-0.5"><Icons.Moon /> Night</span>
                                         )}
                                     </div>
                                 )}
@@ -336,16 +334,16 @@ const AttendanceLog = () => {
                   }) : <div className="p-8 text-center text-slate-400 text-sm">No employees found.</div>}
               </div>
 
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0">
                 <div className="flex items-center gap-2">
                     <input type="checkbox" id="nightDutyLog" className="w-4 h-4 text-blue-600 rounded" checked={attendanceData.isNightDuty} onChange={(e) => setAttendanceData({...attendanceData, isNightDuty: e.target.checked})} />
-                    <label htmlFor="nightDutyLog" className="text-sm text-slate-700 font-medium cursor-pointer flex items-center gap-1"><Icons.Moon /> Mark Night Duty</label>
+                    <label htmlFor="nightDutyLog" className="text-xs md:text-sm text-slate-700 font-medium cursor-pointer flex items-center gap-1"><Icons.Moon /> Mark Night Duty</label>
                 </div>
-                <div className="text-xs text-slate-500">Selected: <span className="font-bold text-slate-800">{selectedIds.length}</span></div>
+                <div className="text-[10px] md:text-xs text-slate-500">Selected: <span className="font-bold text-slate-800">{selectedIds.length}</span></div>
               </div>
 
               <div className="pt-4">
-                <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2">
+                <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 md:py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 text-sm">
                     <Icons.CheckCircle /> Confirm Update ({selectedIds.length})
                 </button>
               </div>

@@ -22,7 +22,7 @@ const Icons = {
   CheckCircle: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
 };
 
-const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
+const PayrollModal = ({ isOpen, onClose, onRefresh, onSuccessNav, employees = [] }) => {
   const [step, setStep] = useState('input');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [result, setResult] = useState(null);
@@ -85,6 +85,7 @@ const PayrollModal = ({ isOpen, onClose, onSuccessNav, employees = [] }) => {
   };
 
   const handleClose = () => {
+    if (result && onRefresh) onRefresh(); // Trigger a data refresh if we successfully ran payroll
     setStep('input');
     setResult(null);
     setError(null);
@@ -305,7 +306,9 @@ const SalaryReport = () => {
   const [loading, setLoading] = useState(false);
   const [pageError, setPageError] = useState(null);
   
-  const [filterMonth, setFilterMonth] = useState('');
+  // Default to the actual current month immediately
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
+  const [filterMonth, setFilterMonth] = useState(currentMonthStr);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [expandedEmployees, setExpandedEmployees] = useState({});
@@ -339,7 +342,6 @@ const SalaryReport = () => {
     try {
       const res = await API.get('/salary/history');
       setSalaries(res.data);
-      if (res.data.length > 0 && !filterMonth) setFilterMonth(res.data[0].month);
     } catch (e) {
       setPageError("Failed to fetch payroll history.");
     } finally { 
@@ -358,7 +360,6 @@ const SalaryReport = () => {
 
   const handleEditClick = (rec) => {
     setEditingItem(rec);
-    
     const existingAdjustments = rec.adjustments || [];
     const base = rec.baseSalary || (rec.netPay - (rec.incentives || 0));
 
@@ -464,17 +465,48 @@ const SalaryReport = () => {
     return false;
   };
 
+  // NEW LOGIC: This ensures active employees show as Pending if the payroll isn't rolled out yet
   const filteredData = useMemo(() => {
-    return salaries.filter(item => {
-      const matchesMonth = filterMonth ? item.month === filterMonth : true;
-      const matchesSearch = item.employee?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            item.employee?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesMonth && matchesSearch;
+    let baseList = [];
+    
+    if (filterMonth) {
+        // If a specific month is selected (like current month), look up all employees
+        const recordsForSelectedMonth = salaries.filter(s => s.month === filterMonth);
+        
+        baseList = employees.map(emp => {
+            const existingRecord = recordsForSelectedMonth.find(s => s.employee?._id === emp._id || s.employee === emp._id);
+            if (existingRecord) return existingRecord; // Actual generated record
+            
+            // If no record exists, create a frontend "Dummy" record to show as Pending
+            return {
+                _id: `pending-${emp._id}`,
+                employee: emp,
+                month: filterMonth,
+                presentDays: 0,
+                netPay: 0, // Showing 0 payout until officially rolled out
+                status: 'Pending',
+                adjustments: [],
+                isDummy: true, // Custom flag to modify UI buttons
+                updatedAt: null
+            };
+        });
+    } else {
+        // "All Periods" view strictly shows actual generated history records only
+        baseList = salaries;
+    }
+
+    return baseList.filter(item => {
+      const empFirst = item.employee?.firstName?.toLowerCase() || '';
+      const empLast = item.employee?.lastName?.toLowerCase() || '';
+      const search = searchTerm.toLowerCase();
+      return empFirst.includes(search) || empLast.includes(search);
     });
-  }, [salaries, filterMonth, searchTerm]);
+  }, [salaries, employees, filterMonth, searchTerm]);
 
   const viewData = useMemo(() => {
     if (filterMonth !== '') return filteredData; 
+    
+    // Grouping logic for "All Periods"
     const groups = {};
     filteredData.forEach(item => {
         const empId = item.employee?._id;
@@ -487,13 +519,15 @@ const SalaryReport = () => {
   }, [filteredData, filterMonth]);
 
   const stats = useMemo(() => {
-    const totalPayout = filteredData.reduce((acc, curr) => acc + (curr.netPay || 0), 0);
-    const uniqueStaff = new Set(filteredData.map(s => s.employee?._id)).size;
-    const paidCount = filteredData.filter(s => s.status === 'Paid').length;
+    const actualRecords = filteredData.filter(s => !s.isDummy);
+    const totalPayout = actualRecords.reduce((acc, curr) => acc + (curr.netPay || 0), 0);
+    const uniqueStaff = new Set(actualRecords.map(s => s.employee?._id)).size;
+    const paidCount = actualRecords.filter(s => s.status === 'Paid').length;
     return { totalPayout, uniqueStaff, paidCount, totalRecords: filteredData.length };
   }, [filteredData]);
 
-  const availableMonths = [...new Set(salaries.map(s => s.month))].sort().reverse();
+  // Ensure current month is always present in dropdown options
+  const availableMonths = [...new Set([...salaries.map(s => s.month), currentMonthStr])].sort().reverse();
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '-';
 
   const HistoryRow = ({ adjustments }) => {
@@ -585,7 +619,7 @@ const SalaryReport = () => {
                     <p className="text-2xl font-bold text-emerald-600">{stats.paidCount}</p>
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-tighter">Settled</p>
                 </div>
-                <p className="text-[10px] text-rose-400 mt-1 font-bold italic">{stats.totalRecords - stats.paidCount} Pending</p>
+                <p className="text-[10px] text-rose-400 mt-1 font-bold italic">{stats.totalRecords - stats.paidCount} Pending Processing</p>
             </div>
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><Icons.ShieldCheck /></div>
         </div>
@@ -598,7 +632,7 @@ const SalaryReport = () => {
                 onChange={(e) => setFilterMonth(e.target.value)}
                 className="bg-slate-50 border border-slate-200 text-slate-700 py-2 px-4 rounded-lg text-[11px] font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
             >
-                <option value="">All Periods</option>
+                <option value="">All Periods (History)</option>
                 {availableMonths.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
 
@@ -686,11 +720,11 @@ const SalaryReport = () => {
                     } 
                     else {
                         const rec = item;
-                        const isAdvance = checkIsAdvance(rec.month, rec.updatedAt);
+                        const isAdvance = !rec.isDummy && checkIsAdvance(rec.month, rec.updatedAt);
                         const isRecExpanded = expandedRecords[rec._id];
                         return (
                             <>
-                                <tr key={rec._id} onClick={() => toggleRecordExpand(rec._id)} className="hover:bg-blue-50/20 transition-colors group cursor-pointer">
+                                <tr key={rec._id} onClick={() => { if(!rec.isDummy) toggleRecordExpand(rec._id) }} className={`${rec.isDummy ? '' : 'hover:bg-blue-50/20 cursor-pointer'} transition-colors group`}>
                                     <td className="px-6 py-4">
                                         <div className="font-bold text-slate-800 text-xs">{rec.employee?.firstName} {rec.employee?.lastName}</div>
                                         <div className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">{rec.employee?.employeeCode}</div>
@@ -699,18 +733,39 @@ const SalaryReport = () => {
                                         {rec.month}
                                         {isAdvance && <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200 uppercase tracking-tighter">Advance</span>}
                                     </td>
-                                    <td className="px-6 py-4 text-[11px] text-slate-400 font-medium">{formatDate(rec.updatedAt)}</td>
-                                    <td className="px-6 py-4 text-center"><span className="bg-slate-100 text-slate-600 py-0.5 px-2 rounded font-bold text-[10px] uppercase">{rec.presentDays} Days</span></td>
-                                    <td className="px-6 py-4 text-right font-bold text-slate-900 text-sm italic">₹{rec.netPay?.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-[11px] text-slate-400 font-medium">
+                                        {rec.isDummy ? <span className="italic text-slate-300">Not Generated</span> : formatDate(rec.updatedAt)}
+                                    </td>
                                     <td className="px-6 py-4 text-center">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border ${rec.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : rec.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>{rec.status}</span>
+                                        <span className="bg-slate-100 text-slate-600 py-0.5 px-2 rounded font-bold text-[10px] uppercase">
+                                            {rec.isDummy ? '-' : `${rec.presentDays} Days`}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-bold text-slate-900 text-sm italic">
+                                        ₹{rec.isDummy ? '0' : rec.netPay?.toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border ${
+                                            rec.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                                            rec.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
+                                            rec.status === 'Pending' ? 'bg-slate-100 text-slate-600 border-slate-200' : // Handled pending status styling
+                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                        }`}>
+                                            {rec.status}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                                        <button onClick={(e) => { e.stopPropagation(); handleEditClick(rec); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Icons.Edit /></button>
-                                        <button className="p-2 text-slate-400 hover:text-blue-600 bg-white border border-slate-200 rounded-lg shadow-sm">{isRecExpanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}</button>
+                                        {rec.isDummy ? (
+                                            <span className="text-[10px] text-slate-400 italic font-medium px-2">Run Payroll First</span>
+                                        ) : (
+                                            <>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEditClick(rec); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Icons.Edit /></button>
+                                                <button className="p-2 text-slate-400 hover:text-blue-600 bg-white border border-slate-200 rounded-lg shadow-sm">{isRecExpanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}</button>
+                                            </>
+                                        )}
                                     </td>
                                 </tr>
-                                {isRecExpanded && <HistoryRow adjustments={rec.adjustments} />}
+                                {isRecExpanded && !rec.isDummy && <HistoryRow adjustments={rec.adjustments} />}
                             </>
                         );
                     }
@@ -874,6 +929,7 @@ const SalaryReport = () => {
       <PayrollModal 
         isOpen={showPayrollModal} 
         onClose={() => setShowPayrollModal(false)} 
+        onRefresh={fetchHistory} 
         onSuccessNav={navigate}
         employees={employees}
       />
