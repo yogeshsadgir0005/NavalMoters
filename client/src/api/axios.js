@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://navalmoters.onrender.com/api",
+  baseURL:"https://navalmoters.onrender.com/api",
 
 });
 

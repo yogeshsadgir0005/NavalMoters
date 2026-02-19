@@ -5,31 +5,46 @@ const User = require('../models/User');
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    // 1. Total Staff: Exclude Terminated
-    const totalEmployees = await Employee.countDocuments({ status: { $ne: 'Terminated' } });
+    // 1. Fetch ONLY Active Employees first
+    const activeEmployees = await Employee.find({ status: { $ne: 'Terminated' } })
+      .select('_id firstName lastName email phone family bankDetails department jobProfile documents isProfileComplete');
+
+    // Create an array of active employee IDs to filter our counts
+    const activeEmpIds = activeEmployees.map(emp => String(emp._id));
     
-    // 2. Attendance Counts
+    // Total Staff: Exclude Terminated
+    const totalEmployees = activeEmployees.length;
+    
+    // 2. Fetch Today's Logs specifically for Active Employees
     const today = new Date();
     today.setHours(0,0,0,0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const presentToday = await Attendance.countDocuments({
-      date: { $gte: today, $lt: tomorrow },
-      status: 'Present'
+    const todaysLogs = await Attendance.find({
+      employee: { $in: activeEmpIds },
+      date: { $gte: today, $lt: tomorrow }
+    }).sort({ createdAt: -1 }); // Sort by newest first to get the latest status if duplicates exist
+
+    // Deduplicate: Ensure each employee is only counted ONCE for today
+    const uniqueAttendance = {};
+    todaysLogs.forEach(log => {
+        const empId = String(log.employee);
+        if (!uniqueAttendance[empId]) {
+            uniqueAttendance[empId] = log.status;
+        }
     });
 
-    const absentToday = await Attendance.countDocuments({
-      date: { $gte: today, $lt: tomorrow },
-      status: 'Absent'
+    let presentToday = 0;
+    let absentToday = 0;
+
+    Object.values(uniqueAttendance).forEach(status => {
+        if (status === 'Present') presentToday++;
+        if (status === 'Absent') absentToday++;
     });
 
-    // 3. Pending Docs: Smart Calculation (Matches Personnel Page Logic)
-    // We fetch all active employees and check their fields manually to be 100% accurate
-    const allActiveEmployees = await Employee.find({ status: { $ne: 'Terminated' } })
-      .select('firstName lastName email phone family bankDetails department jobProfile documents isProfileComplete');
-
-    const pendingProfiles = allActiveEmployees.filter(emp => {
+    // 3. Pending Docs: Smart Calculation
+    const pendingProfiles = activeEmployees.filter(emp => {
         // If DB flag is already true, it's complete
         if (emp.isProfileComplete) return false;
 
