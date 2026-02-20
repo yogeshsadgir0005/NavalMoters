@@ -2,8 +2,6 @@ const User = require("../models/User");
 const Otp = require("../models/Otp");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const nodemailer = require("nodemailer");
-const dns = require("dns");
 
 // -------------------- JWT --------------------
 const generateToken = (id) =>
@@ -11,41 +9,6 @@ const generateToken = (id) =>
 
 // -------------------- OTP SETTINGS --------------------
 const OTP_EXPIRY_MINUTES = 5;
-
-// -------------------- MAIL TRANSPORT (IPv4 FIX) --------------------
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // STARTTLS
-  requireTLS: true,
-
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASS, // Gmail App Password (NOT your normal password)
-  },
-
-  // ✅ Hard force IPv4 (prevents Render ENETUNREACH IPv6)
-  dns: {
-    lookup: (hostname, options, callback) => {
-      dns.lookup(hostname, { family: 4 }, callback);
-    },
-  },
-
-  tls: {
-    servername: "smtp.gmail.com",
-    // ❌ DO NOT do rejectUnauthorized:false in production
-  },
-});
-
-// Optional: SMTP health check (helpful on Render logs)
-(async () => {
-  try {
-    await transporter.verify();
-    console.log("✅ SMTP ready (Gmail)");
-  } catch (err) {
-    console.error("❌ SMTP verify failed:", err?.message || err);
-  }
-})();
 
 // -------------------- LOGIN ADMIN (PASSWORD) --------------------
 exports.loginAdmin = async (req, res) => {
@@ -121,22 +84,40 @@ exports.requestOtp = async (req, res) => {
       expiresAt,
     });
 
-    await transporter.sendMail({
-      from: `"Naval Motor Portal" <${process.env.SMTP_EMAIL}>`,
-      to: email,
-      subject: "Your Login Access Code",
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <h2 style="color: #0f172a; text-align: center;">Naval Motor Enterprise Portal</h2>
-          <p style="color: #475569; text-align: center;">Your One-Time Password (OTP) for secure login is:</p>
-          <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
-            <h1 style="color: #2563eb; letter-spacing: 5px; margin: 0; font-size: 32px;">${otp}</h1>
+    // --- BREVO API HTTP REQUEST ---
+    const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY, 
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "Naval Motor Portal",
+          email: process.env.SMTP_EMAIL, // This MUST be the email you verified in Brevo
+        },
+        to: [{ email: email }],
+        subject: "Your Login Access Code",
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #0f172a; text-align: center;">Naval Motor Enterprise Portal</h2>
+            <p style="color: #475569; text-align: center;">Your One-Time Password (OTP) for secure login is:</p>
+            <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
+              <h1 style="color: #2563eb; letter-spacing: 5px; margin: 0; font-size: 32px;">${otp}</h1>
+            </div>
+            <p style="color: #64748b; font-size: 12px; text-align: center;">This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
+            <p style="color: #64748b; font-size: 12px; text-align: center;">If you did not request this, please ignore this email.</p>
           </div>
-          <p style="color: #64748b; font-size: 12px; text-align: center;">This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
-          <p style="color: #64748b; font-size: 12px; text-align: center;">If you did not request this, please ignore this email.</p>
-        </div>
-      `,
+        `,
+      }),
     });
+
+    if (!brevoResponse.ok) {
+      const errorData = await brevoResponse.json();
+      console.error("Brevo API Error:", errorData);
+      return res.status(500).json({ message: "Failed to send OTP email via API" });
+    }
 
     return res.json({ message: "Access code sent to your email" });
   } catch (error) {
