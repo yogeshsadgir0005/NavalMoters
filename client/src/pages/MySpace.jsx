@@ -4,14 +4,21 @@ import API from "../api/axios";
 
 const Icons = {
   User: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
+  Users: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
   Bank: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 10V4M11 10V4M15 10V4M19 10V4M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z" /></svg>,
   Docs: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 11h6M8 15h6m-9 4h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
   Briefcase: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+  Clock: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   ArrowUp: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>,
   ArrowDown: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>,
   File: () => <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
   X: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-  ExternalLink: () => <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+  ExternalLink: () => <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>,
+  ChevronDown: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
+  ChevronUp: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>,
+  History: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  Calendar: () => <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+  Moon: () => <svg className="w-3 h-3 lg:w-3.5 lg:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
 };
 
 const getFileUrl = (filename) => {
@@ -125,6 +132,12 @@ const MySpace = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('self');
   const [pageError, setPageError] = useState(null);
+  const [salaryHistory, setSalaryHistory] = useState([]);
+  const [expandedRecords, setExpandedRecords] = useState({});
+
+  const [attendanceMonth, setAttendanceMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [attendanceLogs, setAttendanceLogs] = useState([]);
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTitle, setPreviewTitle] = useState("");
@@ -133,13 +146,31 @@ const MySpace = () => {
 
   useEffect(() => {
     API.get('/employees/me')
-      .then(res => {
+      .then(async res => {
           setEmp(res.data);
           setEmployeeId(res.data._id);
+          try {
+              const salRes = await API.get('/salary/history');
+              const myHistory = salRes.data.filter(s => s.employee?._id === res.data._id || s.employee === res.data._id);
+              setSalaryHistory(myHistory);
+          } catch (e) {}
       })
       .catch(err => setPageError("Failed to load your profile."))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+      if (activeTab === 'attendance' && employeeId) {
+          setLoadingAttendance(true);
+          API.get(`/attendance?month=${attendanceMonth}`)
+              .then(res => {
+                  const myLogs = res.data.filter(l => l.employee?._id === employeeId || l.employee === employeeId);
+                  setAttendanceLogs(myLogs);
+              })
+              .catch(err => {})
+              .finally(() => setLoadingAttendance(false));
+      }
+  }, [activeTab, attendanceMonth, employeeId]);
 
   const documentCards = useMemo(() => {
     if (!emp?.documents) return [];
@@ -164,6 +195,47 @@ const MySpace = () => {
     return cards;
   }, [emp]);
 
+  const toggleRecordExpand = (recId) => {
+    setExpandedRecords(prev => ({ ...prev, [recId]: !prev[recId] }));
+  };
+
+  const HistoryRow = ({ adjustments }) => {
+    if(!adjustments || adjustments.length === 0) return (
+        <tr className="bg-slate-50 border-b border-slate-100"><td colSpan="7" className="p-3 lg:p-4 text-center text-[10px] lg:text-xs text-slate-400 italic">No adjustments recorded for this month.</td></tr>
+    );
+    return (
+        <tr className="bg-slate-50 border-b border-slate-200">
+            <td colSpan="7" className="p-2 md:p-3 lg:p-4">
+                <div className="bg-white border border-slate-200 rounded-lg p-2 md:p-3 lg:p-4 max-w-3xl mx-auto shadow-inner overflow-hidden">
+                    <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <Icons.History /> Adjustment History
+                    </p>
+                    <table className="w-full text-left">
+                        <tbody className="divide-y divide-slate-100">
+                            {adjustments.map((adj, i) => (
+                                <tr key={adj._id || adj.id || `${adj.type}-${adj.date}-${i}`}>
+                                    <td className="py-1.5 lg:py-1 text-[9px] md:text-[10px] lg:text-xs font-bold text-slate-600 w-16 md:w-20 lg:w-24">
+                                        <span className={`px-1.5 py-0.5 rounded border ${adj.type === 'Incentive' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'}`}>
+                                            {adj.type}
+                                        </span>
+                                    </td>
+                                    <td className="py-1.5 lg:py-1 text-[9px] md:text-[10px] lg:text-xs text-slate-700 break-words">{adj.reason}</td>
+                                    <td className="py-1.5 lg:py-1 text-[8px] md:text-[9px] lg:text-[10px] text-slate-400 text-right md:whitespace-nowrap break-words">
+                                        {new Date(adj.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                    </td>
+                                    <td className={`py-1.5 lg:py-1 text-[9px] md:text-[10px] lg:text-xs font-bold text-right w-16 md:w-20 lg:w-24 md:whitespace-nowrap break-words ${adj.type === 'Incentive' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        {adj.type === 'Incentive' ? '+' : '-'} ₹{adj.amount}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    );
+  };
+
   if (loading) return (
       <Layout>
           <div className="flex h-[80vh] items-center justify-center flex-col gap-3">
@@ -186,20 +258,20 @@ const MySpace = () => {
   const TabButton = ({ id, label, Icon }) => (
     <button 
       onClick={() => setActiveTab(id)}
-      className={`px-4 lg:px-6 py-3 lg:py-4 font-bold text-xs lg:text-sm flex items-center gap-2 border-b-2 transition-all whitespace-nowrap shrink-0 ${
+      className={`px-2 md:px-4 lg:px-6 py-2.5 md:py-3 lg:py-4 font-bold text-[10px] md:text-xs lg:text-sm flex items-center justify-center gap-1.5 md:gap-2 border-b-2 transition-all flex-1 md:flex-none md:whitespace-nowrap shrink-0 ${
         activeTab === id 
-        ? 'border-blue-600 text-blue-700' 
-        : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200'
+        ? 'border-blue-600 text-blue-700 bg-blue-50/50 md:bg-transparent' 
+        : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200 hover:bg-slate-50 md:hover:bg-transparent'
       }`}
     >
-      <Icon /> {label}
+      <Icon /> <span className="hidden sm:inline-block md:inline">{label}</span><span className="sm:hidden">{label.split(' ')[0]}</span>
     </button>
   );
 
   const InfoRow = ({ label, val }) => (
     <div className="flex flex-col border-b border-slate-50 py-2 lg:py-3 last:border-0 hover:bg-slate-50/50 transition-colors px-1 lg:px-2 rounded">
       <span className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 lg:mb-1">{label}</span>
-      <span className="font-semibold text-slate-800 text-xs lg:text-sm break-words">{val || '—'}</span>
+      <span className="font-semibold text-slate-800 text-[11px] md:text-xs lg:text-sm break-words">{val || '—'}</span>
     </div>
   );
 
@@ -271,20 +343,23 @@ const MySpace = () => {
             </div>
         </div>
 
-        <div className="flex-1 min-w-0 bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-200 overflow-hidden min-h-[500px] lg:min-h-[600px] flex flex-col">
+        <div className="flex-1 min-w-0 bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-200 overflow-hidden min-h-[500px] lg:min-h-[600px] flex flex-col w-full">
             
-            <div className="flex border-b border-slate-200 px-2 overflow-x-auto whitespace-nowrap custom-scrollbar">
-                <TabButton id="self" label="Personal & Family" Icon={Icons.User} />
-                <TabButton id="job" label="Professional" Icon={Icons.Briefcase} />
-                <TabButton id="financial" label="Financials" Icon={Icons.Bank} />
-                <TabButton id="docs" label="My Documents" Icon={Icons.Docs} />
+            <div className="flex flex-wrap md:flex-nowrap border-b border-slate-200 px-1 md:px-2 overflow-x-hidden md:overflow-x-auto md:whitespace-nowrap custom-scrollbar bg-slate-50/50 md:bg-white pt-1 md:pt-0">
+                <TabButton id="self" label="Personal" Icon={Icons.User} />
+                <TabButton id="family" label="Family" Icon={Icons.Users} />
+                <TabButton id="job" label="History" Icon={Icons.Briefcase} />
+                <TabButton id="financial" label="Salary" Icon={Icons.Bank} />
+                <TabButton id="payments" label="Payments" Icon={Icons.Clock} />
+                <TabButton id="attendance" label="Logs" Icon={Icons.Calendar} />
+                <TabButton id="docs" label="Docs" Icon={Icons.Docs} />
             </div>
 
             {activeTab === 'self' && (
                 <div className="p-4 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-6 lg:gap-x-12 gap-y-6 lg:gap-y-8 animate-in fade-in duration-300">
                     <div className="space-y-1">
                         <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
-                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Contact Details
+                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Contact Info
                         </h3>
                         <InfoRow label="Email Address" val={emp.email} />
                         <InfoRow label="Phone Number" val={emp.phone} />
@@ -293,12 +368,56 @@ const MySpace = () => {
                     </div>
                     <div className="space-y-1">
                         <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
-                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Family Details
+                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Banking Details
+                        </h3>
+                        <InfoRow label="Account Number" val={emp.bankDetails?.accountNo} />
+                        <InfoRow label="IFSC Code" val={emp.bankDetails?.ifsc} />
+                        <InfoRow label="Bank Name" val={emp.bankDetails?.bankName} />
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'family' && (
+                <div className="p-4 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-6 lg:gap-x-12 gap-y-6 lg:gap-y-8 animate-in fade-in duration-300">
+                    <div className="space-y-1">
+                        <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
+                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Parental Info
                         </h3>
                         <InfoRow label="Mother's Name" val={emp.family?.motherName} />
+                        <InfoRow label="Mother's Occupation" val={emp.family?.motherWork} />
                         <InfoRow label="Father's Name" val={emp.family?.fatherName} />
+                        <InfoRow label="Father's Occupation" val={emp.family?.fatherWork} />
+                    </div>
+                    <div className="space-y-1">
+                        <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
+                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Spouse & Dependents
+                        </h3>
                         <InfoRow label="Marital Status" val={emp.family?.maritalStatus} />
-                        <InfoRow label="Spouse Name" val={emp.family?.spouseName} />
+                        <InfoRow label="Anniversary Date" val={emp.family?.anniversary ? new Date(emp.family.anniversary).toLocaleDateString('en-IN') : '-'} />
+                        <div className="mt-4 pt-4 border-t border-slate-100">
+                            <span className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Children</span>
+                            {emp.family?.kids?.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {emp.family.kids.map((kid, i) => (
+                                        <div key={i} className="px-2 md:px-3 py-1 md:py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] md:text-xs font-semibold text-slate-600">
+                                            {kid.name} <span className="text-slate-400 ml-1">({kid.gender})</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : <span className="text-[10px] md:text-xs lg:text-sm text-slate-400 italic">No children listed</span>}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-slate-100">
+                            <span className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Siblings</span>
+                            {emp.family?.siblings?.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {emp.family.siblings.map((sib, i) => (
+                                        <div key={i} className="px-2 md:px-3 py-1 md:py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] md:text-xs font-semibold text-slate-600">
+                                            {sib.name} <span className="text-slate-400 ml-1">({sib.occupation})</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : <span className="text-[10px] md:text-xs lg:text-sm text-slate-400 italic">No siblings listed</span>}
+                        </div>
                     </div>
                 </div>
             )}
@@ -318,8 +437,8 @@ const MySpace = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="p-8 lg:p-12 text-center border-2 border-dashed border-slate-200 rounded-xl">
-                            <p className="text-slate-400 text-xs lg:text-sm font-medium italic">No past employment history recorded.</p>
+                        <div className="p-6 md:p-8 lg:p-12 text-center border-2 border-dashed border-slate-200 rounded-xl">
+                            <p className="text-slate-400 text-[10px] md:text-xs lg:text-sm font-medium italic">No past employment history recorded.</p>
                         </div>
                     )}
                 </div>
@@ -332,57 +451,57 @@ const MySpace = () => {
                             <span className="text-slate-300 text-[9px] lg:text-[10px] font-bold uppercase tracking-widest">Base Salary Setup</span>
                             <div className="flex items-baseline gap-2 mt-1">
                                 <p className="text-2xl lg:text-3xl font-bold tracking-tight">₹{emp.baseSalary?.toLocaleString()}</p>
-                                <span className="px-2 py-0.5 bg-white/10 rounded text-[9px] lg:text-[10px] font-bold uppercase tracking-wider text-slate-200 border border-white/10">
+                                <span className="px-1.5 md:px-2 py-0.5 bg-white/10 rounded text-[8px] md:text-[9px] lg:text-[10px] font-bold uppercase tracking-wider text-slate-200 border border-white/10">
                                     {emp.wageType} Wage
                                 </span>
                             </div>
                         </div>
                         <div className="relative z-10 mt-3 md:mt-0 text-left md:text-right">
-                            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
-                            <p className="font-bold text-xs lg:text-sm">{emp.bankDetails?.bankName || 'Not Provided'}</p>
+                            <p className="text-[8px] md:text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Bank Name</p>
+                            <p className="font-bold text-[11px] md:text-xs lg:text-sm">{emp.bankDetails?.bankName || 'Not Provided'}</p>
                         </div>
                         <div className="absolute right-0 top-0 h-full w-64 bg-white/5 skew-x-12 translate-x-10"></div>
                     </div>
                     
-                    <div>
+                    <div className="w-full">
                         <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
                             <span className="w-1 h-3 lg:h-4 bg-slate-300 rounded-full"></span> Increment History
                         </h3>
-                        <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
-                            <table className="w-full text-left min-w-[500px]">
-                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[9px] lg:text-[10px] tracking-widest border-b border-slate-200">
+                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm w-full">
+                            <table className="w-full text-left md:min-w-[500px]">
+                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[8px] md:text-[9px] lg:text-[10px] tracking-widest border-b border-slate-200">
                                     <tr>
-                                        <th className="px-3 lg:px-4 py-2 lg:py-3">Date</th>
-                                        <th className="px-3 lg:px-4 py-2 lg:py-3">Action</th>
-                                        <th className="px-3 lg:px-4 py-2 lg:py-3">Adjustment</th>
-                                        <th className="px-3 lg:px-4 py-2 lg:py-3">New Salary</th>
-                                        <th className="px-3 lg:px-4 py-2 lg:py-3 w-1/3">Reason</th>
+                                        <th className="px-2 md:px-3 lg:px-4 py-2 lg:py-3">Date</th>
+                                        <th className="px-1.5 md:px-3 lg:px-4 py-2 lg:py-3">Action</th>
+                                        <th className="px-1.5 md:px-3 lg:px-4 py-2 lg:py-3">Adj.</th>
+                                        <th className="px-1.5 md:px-3 lg:px-4 py-2 lg:py-3">New Salary</th>
+                                        <th className="px-2 md:px-3 lg:px-4 py-2 lg:py-3 w-1/4 md:w-1/3">Reason</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {emp.increments?.length > 0 ? [...emp.increments].reverse().map((inc, i) => (
                                         <tr key={i} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-3 lg:px-4 py-2 lg:py-3 text-slate-600 text-[10px] lg:text-xs font-medium whitespace-nowrap">
+                                            <td className="px-2 md:px-3 lg:px-4 py-2 lg:py-3 text-slate-600 text-[9px] md:text-[10px] lg:text-xs font-medium md:whitespace-nowrap break-words">
                                                 {new Date(inc.date).toLocaleDateString('en-IN')}
                                             </td>
-                                            <td className="px-3 lg:px-4 py-2 lg:py-3">
-                                                <span className={`inline-flex items-center gap-1 px-1.5 lg:px-2 py-0.5 rounded text-[9px] lg:text-[10px] font-bold uppercase border ${
+                                            <td className="px-1.5 md:px-3 lg:px-4 py-2 lg:py-3">
+                                                <span className={`inline-flex items-center gap-0.5 md:gap-1 px-1 md:px-1.5 lg:px-2 py-0.5 rounded text-[8px] md:text-[9px] lg:text-[10px] font-bold uppercase border ${
                                                     inc.type === 'Increment' 
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
                                                     : 'bg-rose-50 text-rose-700 border-rose-100'
                                                 }`}>
                                                     {inc.type === 'Increment' ? <Icons.ArrowUp /> : <Icons.ArrowDown />}
-                                                    {inc.type}
+                                                    <span className="hidden sm:inline">{inc.type}</span>
                                                 </span>
                                             </td>
-                                            <td className={`px-3 lg:px-4 py-2 lg:py-3 text-[10px] lg:text-xs font-bold whitespace-nowrap ${inc.type === 'Increment' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            <td className={`px-1.5 md:px-3 lg:px-4 py-2 lg:py-3 text-[9px] md:text-[10px] lg:text-xs font-bold md:whitespace-nowrap break-words ${inc.type === 'Increment' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                 {inc.type === 'Increment' ? '+' : '-'} ₹{inc.amount.toLocaleString()}
                                             </td>
-                                            <td className="px-3 lg:px-4 py-2 lg:py-3 text-[10px] lg:text-xs font-bold text-slate-800 whitespace-nowrap">₹{inc.newSalary.toLocaleString()}</td>
-                                            <td className="px-3 lg:px-4 py-2 lg:py-3 text-[10px] lg:text-xs text-slate-500 italic break-words min-w-[150px]">{inc.reason}</td>
+                                            <td className="px-1.5 md:px-3 lg:px-4 py-2 lg:py-3 text-[9px] md:text-[10px] lg:text-xs font-bold text-slate-800 md:whitespace-nowrap break-words">₹{inc.newSalary.toLocaleString()}</td>
+                                            <td className="px-2 md:px-3 lg:px-4 py-2 lg:py-3 text-[8px] md:text-[10px] lg:text-xs text-slate-500 italic break-words md:min-w-[150px] min-w-[80px]">{inc.reason}</td>
                                         </tr>
                                     )) : (
-                                        <tr><td colSpan="5" className="p-6 lg:p-8 text-center text-slate-400 text-[10px] lg:text-xs italic">No structural changes recorded.</td></tr>
+                                        <tr><td colSpan="5" className="p-4 md:p-6 lg:p-8 text-center text-slate-400 text-[9px] md:text-[10px] lg:text-xs italic">No structural changes recorded.</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -391,19 +510,148 @@ const MySpace = () => {
                 </div>
             )}
 
+            {activeTab === 'payments' && (
+                <div className="p-4 lg:p-8 animate-in fade-in duration-300 w-full">
+                    <h3 className="font-bold text-slate-800 mb-3 lg:mb-4 text-xs lg:text-sm flex items-center gap-2">
+                        <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Monthly Payment Ledger
+                    </h3>
+                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm w-full">
+                        <table className="w-full text-left md:min-w-[600px]">
+                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[8px] md:text-[9px] lg:text-[10px] tracking-widest border-b border-slate-200">
+                                <tr>
+                                    <th className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 pl-2 md:pl-4">Period</th>
+                                    <th className="px-1 md:px-3 lg:px-4 py-2 lg:py-3">Generated</th>
+                                    <th className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-center">Days</th>
+                                    <th className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-right">Incentive</th>
+                                    <th className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-right">Net Paid</th>
+                                    <th className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-center">Status</th>
+                                    <th className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-right pr-2 md:pr-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {salaryHistory.length > 0 ? salaryHistory.map((sal) => {
+                                    const isExpanded = expandedRecords[sal._id];
+                                    return (
+                                        <div key={sal._id} className="contents">
+                                            <tr 
+                                                className={`hover:bg-slate-50 transition-colors cursor-pointer ${isExpanded ? 'bg-slate-50' : ''}`}
+                                                onClick={() => toggleRecordExpand(sal._id)}
+                                            >
+                                                <td className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-[10px] md:text-xs lg:text-sm font-bold text-blue-700 md:whitespace-nowrap break-words pl-2 md:pl-4">{sal.month}</td>
+                                                <td className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-[9px] md:text-[10px] lg:text-xs text-slate-500 md:whitespace-nowrap break-words">{new Date(sal.updatedAt).toLocaleDateString('en-IN')}</td>
+                                                <td className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-center">
+                                                    <span className="bg-slate-100 text-slate-600 px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] lg:text-[10px] font-bold uppercase md:whitespace-nowrap break-words">{sal.presentDays}</span>
+                                                </td>
+                                                <td className={`px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-right text-[9px] md:text-[10px] lg:text-xs font-bold md:whitespace-nowrap break-words ${sal.incentives >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                    {sal.incentives > 0 ? '+' : ''}₹{sal.incentives?.toLocaleString() || 0}
+                                                </td>
+                                                <td className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-right text-[10px] md:text-xs lg:text-sm font-bold text-slate-900 font-mono md:whitespace-nowrap break-words">₹{sal.netPay?.toLocaleString() || 0}</td>
+                                                <td className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-center">
+                                                    <span className={`px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] lg:text-[10px] font-bold uppercase border md:whitespace-nowrap break-words ${
+                                                        sal.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                                                        sal.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                        'bg-amber-50 text-amber-700 border-amber-100'
+                                                    }`}>
+                                                        {sal.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-1 md:px-3 lg:px-4 py-2 lg:py-3 text-right pr-2 md:pr-4">
+                                                    <button className="text-slate-400 hover:text-blue-600 p-0.5 md:p-1">
+                                                        {isExpanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {isExpanded && <HistoryRow adjustments={sal.adjustments} />}
+                                        </div>
+                                    );
+                                }) : (
+                                    <tr><td colSpan="7" className="p-4 md:p-6 lg:p-8 text-center text-slate-400 text-[9px] md:text-[10px] lg:text-xs italic">No payment history found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'attendance' && (
+                <div className="p-4 lg:p-8 animate-in fade-in duration-300 w-full">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4 mb-4 lg:mb-6">
+                        <h3 className="font-bold text-slate-800 text-xs lg:text-sm flex items-center gap-2">
+                            <span className="w-1 h-3 lg:h-4 bg-blue-600 rounded-full"></span> Monthly Attendance
+                        </h3>
+                        <div className="relative group w-full sm:w-auto">
+                            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
+                                <Icons.Calendar />
+                            </div>
+                            <input 
+                                type="month" 
+                                value={attendanceMonth} 
+                                onChange={(e) => setAttendanceMonth(e.target.value)}
+                                className="pl-8 pr-3 py-2 border border-slate-200 rounded-lg bg-white font-semibold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all text-[10px] md:text-xs lg:text-sm cursor-pointer w-full sm:w-48"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 md:gap-3 lg:gap-4 text-[8px] md:text-[9px] lg:text-[10px] font-medium text-slate-500 mb-4 bg-slate-50 p-2 lg:p-3 rounded-lg border border-slate-100">
+                        <span className="font-bold text-slate-700 uppercase tracking-wider hidden sm:inline-block">Legend:</span>
+                        <span className="flex items-center gap-1"><span className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-emerald-500"></span> Present</span>
+                        <span className="flex items-center gap-1"><span className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-rose-500"></span> Absent</span>
+                        <span className="flex items-center gap-1"><span className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-amber-500"></span> Half Day</span>
+                        <span className="flex items-center gap-1"><span className="w-2 md:w-2.5 h-2 md:h-2.5 rounded-sm bg-slate-800"></span> Night Duty</span>
+                    </div>
+
+                    {loadingAttendance ? (
+                        <div className="py-8 md:py-12 flex flex-col items-center justify-center gap-2 md:gap-3">
+                            <div className="animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-2 border-blue-100 border-t-blue-600"></div>
+                            <span className="text-slate-400 text-[10px] md:text-xs">Loading records...</span>
+                        </div>
+                    ) : (
+                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-slate-200 gap-px grid grid-cols-7 w-full">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                                <div key={d} className="bg-slate-50 py-1.5 md:py-2 lg:py-3 text-center text-[8px] md:text-[9px] lg:text-[11px] font-bold text-slate-500 uppercase tracking-wider">{d}</div>
+                            ))}
+                            {Array.from({ length: new Date(parseInt(attendanceMonth.split('-')[0]), parseInt(attendanceMonth.split('-')[1]) - 1, 1).getDay() }).map((_, i) => (
+                                <div key={`blank-${i}`} className="bg-white/50 min-h-[50px] md:min-h-[60px] lg:min-h-[80px]"></div>
+                            ))}
+                            {Array.from({ length: new Date(parseInt(attendanceMonth.split('-')[0]), parseInt(attendanceMonth.split('-')[1]), 0).getDate() }, (_, i) => i + 1).map(day => {
+                                const dateStr = `${attendanceMonth}-${String(day).padStart(2, '0')}`;
+                                const log = attendanceLogs.find(l => l.date.startsWith(dateStr));
+                                
+                                return (
+                                    <div key={day} className="bg-white min-h-[50px] md:min-h-[60px] lg:min-h-[80px] p-1 md:p-1.5 lg:p-2 flex flex-col gap-0.5 md:gap-1 transition-colors hover:bg-slate-50">
+                                        <span className="text-[9px] md:text-[10px] lg:text-xs font-semibold text-slate-400">{day}</span>
+                                        {log && (
+                                            <div className={`mt-auto w-full text-center py-0.5 md:py-1 rounded text-[7px] md:text-[8px] lg:text-[10px] font-bold tracking-wide border flex flex-col items-center justify-center ${
+                                                log.status === 'Present' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                log.status === 'Absent' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                'bg-amber-50 text-amber-600 border-amber-100'
+                                            }`}>
+                                                <span className="hidden sm:inline">{log.status}</span>
+                                                <span className="sm:hidden">{log.status === 'Present' ? 'P' : log.status === 'Absent' ? 'A' : 'H'}</span>
+                                                {log.isNightDuty && <span className="flex items-center gap-0.5 text-[6px] md:text-[7px] lg:text-[8px] text-slate-500 mt-0.5"><Icons.Moon /> <span className="hidden sm:inline">Night</span></span>}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {activeTab === 'docs' && (
                 <div className="p-4 lg:p-8 animate-in fade-in duration-300">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-6">
                         {documentCards.map((d, i) => (
                             <div key={i} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                                <div className="p-2.5 lg:p-4 flex items-start justify-between gap-2">
+                                <div className="p-2 lg:p-4 flex items-start justify-between gap-1.5 md:gap-2">
                                     <div className="min-w-0 pr-1">
-                                        <div className="text-[10px] lg:text-xs font-bold text-slate-800 uppercase tracking-wide truncate">{d.title}</div>
-                                        <div className="text-[9px] lg:text-[10px] text-slate-400 mt-0.5 lg:mt-1 font-medium">{d.files.length} File(s)</div>
+                                        <div className="text-[9px] md:text-[10px] lg:text-xs font-bold text-slate-800 uppercase tracking-wide truncate">{d.title}</div>
+                                        <div className="text-[8px] md:text-[9px] lg:text-[10px] text-slate-400 mt-0.5 lg:mt-1 font-medium">{d.files.length} File(s)</div>
                                     </div>
                                     <button
                                         onClick={() => { setPreviewTitle(d.title); setPreviewFiles(d.files); setPreviewOpen(true); }}
-                                        className="px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[9px] lg:text-[10px] font-bold hover:bg-blue-600 hover:text-white transition-all shrink-0"
+                                        className="px-1.5 md:px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[8px] md:text-[9px] lg:text-[10px] font-bold hover:bg-blue-600 hover:text-white transition-all shrink-0"
                                     >
                                         View
                                     </button>
@@ -412,7 +660,7 @@ const MySpace = () => {
                             </div>
                         ))}
                     </div>
-                    {documentCards.length === 0 && <div className="text-[10px] lg:text-xs text-slate-400 italic p-4 text-center">No documents uploaded.</div>}
+                    {documentCards.length === 0 && <div className="text-[10px] md:text-xs text-slate-400 italic p-4 text-center">No documents uploaded.</div>}
                 </div>
             )}
 
