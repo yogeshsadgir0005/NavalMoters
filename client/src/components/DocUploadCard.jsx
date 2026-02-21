@@ -131,7 +131,6 @@ export default function DocUploadCard({
         </div>
       </div>
 
-      {/* Professional Preview Modal */}
       {open && files.length > 0 && (
         <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white w-full max-w-4xl rounded-2xl overflow-hidden border border-slate-100 shadow-2xl flex flex-col h-[95vh] md:h-auto md:max-h-[90vh]">

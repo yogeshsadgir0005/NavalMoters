@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL:  "https://navalmoters.onrender.com/api",
-//"http://localhost:5000/api" || 
+//"http://localhost:5000/api"
 });
 
 API.interceptors.request.use(

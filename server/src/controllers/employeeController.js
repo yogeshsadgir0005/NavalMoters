@@ -1,4 +1,3 @@
-// employeeController.js
 const Employee = require('../models/Employee');
 const User = require('../models/User');
 const sheetService = require('../services/googleSheetService');
@@ -28,7 +27,6 @@ function safeJsonParse(val, fallback) {
   }
 }
 
-// Small helper so sheets never crashes API
 function safeSheetCall(fn, ...args) {
   try {
     if (typeof fn === 'function') {
@@ -75,7 +73,6 @@ exports.createEmployee = async (req, res) => {
     employee.userId = user._id;
     await employee.save();
 
-    // ✅ Safe sheets sync (won't crash if missing)
     safeSheetCall(sheetService?.syncEmployee, employee);
 
     res.status(201).json(employee);
@@ -156,10 +153,8 @@ exports.updateWizardStep = async (req, res) => {
       if (req.body.phone !== undefined) employee.phone = req.body.phone;
       if (req.body.address !== undefined) employee.address = req.body.address;
 
-      // Prevents empty date string crash in MongoDB
       if (req.body.dob !== undefined) employee.dob = req.body.dob ? req.body.dob : null;
 
-      // Securely sync email update to User Database
       if (req.body.email && req.body.email !== employee.email) {
         const emailExists = await Employee.findOne({ email: req.body.email, _id: { $ne: employee._id } });
         if (emailExists) return res.status(400).json({ message: 'Email already in use by another employee.' });
@@ -228,7 +223,6 @@ exports.updateWizardStep = async (req, res) => {
 
     await employee.save();
 
-    // ✅ Safe sheets sync
     safeSheetCall(sheetService?.syncEmployee, employee);
 
     res.json(employee);
@@ -280,7 +274,6 @@ exports.addSalaryIncrement = async (req, res) => {
     employee.baseSalary = newSalary;
     await employee.save();
 
-    // ✅ FIX: correct param order -> (incrementRecord, employee)
     safeSheetCall(sheetService?.syncIncrement, incrementRecord, employee);
     safeSheetCall(sheetService?.syncEmployee, employee);
 

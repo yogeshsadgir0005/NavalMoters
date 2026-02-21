@@ -1,7 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// --- Icons (Inline SVGs) ---
 const Icons = {
   Dashboard: ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
   Users: ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
@@ -21,15 +20,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   
   if (!user) return null;
 
-  // Role Checks
   const isAdmin = user.role === 'ADMIN';
   const isHR = user.role === 'HR';
   const isEmployee = user.role === 'EMPLOYEE';
   
-  // Group permissions
   const canAccessManagement = isAdmin || isHR;
 
-  // NavItem auto-closes the mobile drawer when a link is clicked
   const NavItem = ({ to, label, Icon }) => {
     const isActive = location.pathname === to;
     return (
@@ -55,7 +51,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
-      {/* Mobile Drawer Overlay - Background dimming */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity" 
@@ -63,15 +58,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         />
       )}
 
-      {/* Sidebar Container */}
       <div className={`w-64 h-screen bg-slate-900 text-white fixed flex flex-col shadow-2xl z-50 border-r border-slate-800 transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         
-        {/* Brand Header */}
         <div className="h-16 md:h-20 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-900 shrink-0">
           <h1 className="text-xl font-extrabold tracking-tighter text-white">
             NAWAL<span className="text-blue-500">MOTOR</span>
           </h1>
-          {/* Close button for Mobile Drawer */}
           {setIsOpen && (
             <button onClick={() => setIsOpen(false)} className="md:hidden p-1.5 -mr-2 text-slate-400 hover:text-white rounded-lg transition-colors">
               <Icons.X className="w-6 h-6" />
@@ -79,9 +71,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           )}
         </div>
 
-        {/* Navigation Links */}
         <nav className="flex-1 py-6 space-y-1 overflow-y-auto custom-scrollbar">
-          {/* 1. MANAGEMENT SECTION (Admin & HR) */}
           {canAccessManagement && (
             <>
               <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-2">
@@ -91,7 +81,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               <NavItem to="/personnel" label="Personnel" Icon={Icons.Users} />
               <NavItem to="/masters" label="System Settings" Icon={Icons.Settings} />
               
-              {/* Reports Group */}
               <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">
                 Reports
               </div>
@@ -100,7 +89,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </>
           )}
 
-          {/* 2. ADMIN ONLY SECTION */}
           {isAdmin && (
             <>
               <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">
@@ -110,7 +98,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </>
           )}
           
-          {/* 3. EMPLOYEE ONLY SECTION (My Space) */}
           {isEmployee && (
             <>
               <div className="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-6">
@@ -121,7 +108,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           )}
         </nav>
 
-        {/* Logout Footer */}
         <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
           <button 
             onClick={handleLogout}

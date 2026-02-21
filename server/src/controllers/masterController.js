@@ -17,7 +17,6 @@ exports.addJobProfile = async (req, res) => {
   res.json(item);
 };
 
-// NEW: Delete Controllers
 exports.deleteDepartment = async (req, res) => {
   try {
     await Department.findByIdAndDelete(req.params.id);

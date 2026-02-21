@@ -35,7 +35,6 @@ async function getSheetClient() {
   return google.sheets({ version: "v4", auth: client });
 }
 
-// Ensure header exists (Checks A1, updates if empty)
 async function ensureHeader(sheets, tabName, headerRow) {
   try {
     const res = await sheets.spreadsheets.values.get({
@@ -66,12 +65,8 @@ function safeText(val, fallback = "") {
   return String(val);
 }
 
-// ------------------------------------------------------------------
-// 1) BATCH SYNC ATTENDANCE (Instantly handles 1 or 100 records)
-// ------------------------------------------------------------------
 exports.syncAttendance = async (attendanceData) => {
   try {
-    // 1. Normalize input to always be an array
     const docs = Array.isArray(attendanceData) ? attendanceData : [attendanceData];
     if (docs.length === 0) return;
 
@@ -80,25 +75,23 @@ exports.syncAttendance = async (attendanceData) => {
     const headers = ["Date", "Emp Code", "Name", "Status", "Shift", "Marked By", "Last Updated"];
     await ensureHeader(sheets, tabName, headers);
 
-    // 2. Fetch existing data ONCE (Massive performance boost)
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${tabName}!A:B`, // Only get Date and EmpCode for matching
+      range: `${tabName}!A:B`, 
     });
     const rows = res.data.values || [];
 
-    // 3. Build a fast lookup map in memory
     const rowMap = new Map();
     for (let i = 1; i < rows.length; i++) {
       const rDate = String(rows[i][0] || "").trim();
       const rCode = String(rows[i][1] || "").trim();
-      rowMap.set(`${rDate}_${rCode}`, i + 1); // i + 1 gives actual Google Sheet row number
+      rowMap.set(`${rDate}_${rCode}`, i + 1);
     }
 
     const updateData = [];
     const appendData = [];
 
-    // 4. Sort incoming data into "Updates" or "Appends"
+   
     for (const doc of docs) {
       const emp = doc.employee || doc;
       const empCode = safeText(emp?.employeeCode, "N/A");
@@ -106,7 +99,7 @@ exports.syncAttendance = async (attendanceData) => {
       const empName = safeText(emp?.firstName ? `${emp.firstName} ${emp.lastName}` : (emp?.name || "Unknown"), "Unknown");
       
       const rowData = [
-        "'" + dateStr, // Force text format
+        "'" + dateStr, 
         empCode,
         empName,
         doc.status,
@@ -117,20 +110,16 @@ exports.syncAttendance = async (attendanceData) => {
 
       const key = `${dateStr}_${empCode}`;
       if (rowMap.has(key)) {
-        // Exists: Overwrite the specific row
         const rowIndex = rowMap.get(key);
         updateData.push({
           range: `${tabName}!A${rowIndex}:G${rowIndex}`,
           values: [rowData],
         });
       } else {
-        // New: Append to bottom
         appendData.push(rowData);
-        rowMap.set(key, rows.length + appendData.length); // Prevent duplicates within same batch
-      }
+        rowMap.set(key, rows.length + appendData.length); 
+         }
     }
-
-    // 5. Fire exactly TWO optimized API calls
     if (updateData.length > 0) {
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
@@ -152,10 +141,6 @@ exports.syncAttendance = async (attendanceData) => {
     console.error("Attendance Sync Error:", error.message);
   }
 };
-
-// ------------------------------------------------------------------
-// 2) BATCH SYNC PAYROLL 
-// ------------------------------------------------------------------
 exports.syncPayroll = async (payrollList) => {
   try {
     if (!payrollList || payrollList.length === 0) return;
@@ -251,9 +236,6 @@ exports.syncPayroll = async (payrollList) => {
   }
 };
 
-// ------------------------------------------------------------------
-// 3) BATCH SYNC INCREMENTS
-// ------------------------------------------------------------------
 exports.syncIncrement = async (incrementData, employee) => {
   try {
     const logs = Array.isArray(incrementData) ? incrementData : [incrementData];

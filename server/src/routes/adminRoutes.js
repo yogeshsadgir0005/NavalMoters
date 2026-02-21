@@ -8,30 +8,20 @@ const {
   updateWizardStep
 } = require('../controllers/employeeController');
 
-// ADDED: grantHRAccess and removeHRAccess to the import list
 const { getDashboardStats, getHRUsers, grantHRAccess, removeHRAccess } = require('../controllers/adminController');
 const { protect, restrictTo } = require('../middlewares/authMiddleware');
 const upload = require('../config/multer');
 
 router.use(protect);
 
-// Admin / HR
 router.post('/', restrictTo('ADMIN', 'HR'), createEmployee);
 router.get('/', restrictTo('ADMIN', 'HR'), getEmployees);
-
-// ✅ MUST BE BEFORE `/:id`
 router.get('/hr-users', restrictTo('ADMIN'), getHRUsers);
-
-// FIX: Added "HR" to allowed roles for dashboard
 router.get("/dashboard", restrictTo("ADMIN", "HR"), getDashboardStats);
 
 router.put('/hr-users/:id/grant', grantHRAccess);
 router.put('/hr-users/:id/revoke', removeHRAccess);
-
-// Read-only employee view
 router.get('/:id', getEmployeeById);
-
-// Wizard updates
 const uploadFields = upload.fields([
   { name: 'aadhar', maxCount: 1 },
   { name: 'pan', maxCount: 1 },

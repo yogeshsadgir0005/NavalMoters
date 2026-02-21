@@ -60,7 +60,7 @@ const employeeSchema = new mongoose.Schema({
     dl: String,
     appHindi: String,
     appEnglish: String,
-    bankProof: String, // <--- FIXED: Added missing bankProof field
+    bankProof: String, 
     certificates: [String],
     otherKyc: [String]
   },

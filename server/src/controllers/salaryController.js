@@ -34,21 +34,19 @@ exports.generateSalary = async (req, res) => {
         continue;
       }
 
-      // 1. Calculate Attendance
+    
       const attendanceCount = await Attendance.countDocuments({
         employee: emp._id,
         date: { $gte: start, $lt: end },
         status: 'Present'
       });
 
-      // 2. Calculate Night Duties
       const nightDutyCount = await Attendance.countDocuments({
         employee: emp._id,
         date: { $gte: start, $lt: end },
         isNightDuty: true
       });
 
-      // 3. Calculate Base Salary
       let earnedSalary = 0;
       if (emp.wageType === 'Daily') {
         earnedSalary = (emp.baseSalary || 0) * attendanceCount;
@@ -56,10 +54,8 @@ exports.generateSalary = async (req, res) => {
         earnedSalary = emp.baseSalary || 0; 
       }
 
-      // Initial net pay (Incentives default to 0)
       const netPay = earnedSalary;
 
-      // 4. Save/Update Salary
       const salaryDoc = await Salary.findOneAndUpdate(
         { employee: emp._id, month },
         { 
@@ -67,9 +63,9 @@ exports.generateSalary = async (req, res) => {
           presentDays: attendanceCount,
           nightDutyCount, 
           incentives: 0,
-          adjustments: [], // Start with empty history
+          adjustments: [], 
           netPay,
-          status: 'Paid' // <-- BUG FIX: Default status changed to Paid (Completed)
+          status: 'Paid' 
         },
         { upsert: true, new: true }
       ).populate('employee', 'firstName lastName employeeCode');

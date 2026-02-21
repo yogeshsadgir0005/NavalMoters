@@ -2,20 +2,16 @@ const Attendance = require('../models/Attendance');
 const sheetService = require('../services/googleSheetService');
 
 exports.markAttendance = async (req, res) => {
-  // NOW ACCEPTS 'employeeIds' ARRAY
   const { employeeIds, employeeId, date, status, isNightDuty } = req.body; 
   
-  // Handle both bulk (array) and legacy single (string) requests
   const targets = employeeIds && Array.isArray(employeeIds) ? employeeIds : [employeeId];
 
   try {
     const results = [];
     
-    // Process all selected employees
     for (const id of targets) {
       if(!id) continue;
       
-      // 1. Upsert MongoDB (Update if exists, Create if not)
       let att = await Attendance.findOneAndUpdate(
         { employee: id, date: new Date(date) },
         { 
@@ -25,14 +21,13 @@ exports.markAttendance = async (req, res) => {
         { upsert: true, new: true }
       ).populate('employee', 'firstName lastName employeeCode');
       
-      // Push the successfully saved record to our batch array
+     
       results.push(att);
     }
 
-    // 2. Sync to Google Sheet EXACTLY ONCE for the entire batch
+
     if (results.length > 0) {
-      // We pass the whole array to the new batch sync function
-      sheetService.syncAttendance(results).catch(err => {
+        sheetService.syncAttendance(results).catch(err => {
         console.error("Bulk Sheet Sync Error:", err);
       });
     }
@@ -44,16 +39,15 @@ exports.markAttendance = async (req, res) => {
 };
 
 exports.getAttendanceLogs = async (req, res) => {
-  const { month, date } = req.query; // Added 'date' support
+  const { month, date } = req.query; 
   try {
     let query = {};
 
     if (date) {
-      // Fetch specific day logs (for Modal Status check)
-      const queryDate = new Date(date);
+        const queryDate = new Date(date);
       query.date = queryDate;
     } else if (month) {
-      // Fetch monthly logs (for Register View)
+     
       const start = new Date(`${month}-01`);
       const end = new Date(new Date(start).setMonth(start.getMonth() + 1));
       query.date = { $gte: start, $lt: end };

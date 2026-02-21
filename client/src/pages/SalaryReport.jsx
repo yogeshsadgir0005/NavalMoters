@@ -85,7 +85,7 @@ const PayrollModal = ({ isOpen, onClose, onRefresh, onSuccessNav, employees = []
   };
 
   const handleClose = () => {
-    if (result && onRefresh) onRefresh(); // Trigger a data refresh if we successfully ran payroll
+    if (result && onRefresh) onRefresh(); 
     setStep('input');
     setResult(null);
     setError(null);
@@ -306,7 +306,6 @@ const SalaryReport = () => {
   const [loading, setLoading] = useState(false);
   const [pageError, setPageError] = useState(null);
   
-  // Default to the actual current month immediately
   const currentMonthStr = new Date().toISOString().slice(0, 7);
   const [filterMonth, setFilterMonth] = useState(currentMonthStr);
   const [searchTerm, setSearchTerm] = useState('');
@@ -465,33 +464,30 @@ const SalaryReport = () => {
     return false;
   };
 
-  // NEW LOGIC: This ensures active employees show as Pending if the payroll isn't rolled out yet
-  const filteredData = useMemo(() => {
+    const filteredData = useMemo(() => {
     let baseList = [];
     
     if (filterMonth) {
-        // If a specific month is selected (like current month), look up all employees
-        const recordsForSelectedMonth = salaries.filter(s => s.month === filterMonth);
+            const recordsForSelectedMonth = salaries.filter(s => s.month === filterMonth);
         
         baseList = employees.map(emp => {
             const existingRecord = recordsForSelectedMonth.find(s => s.employee?._id === emp._id || s.employee === emp._id);
-            if (existingRecord) return existingRecord; // Actual generated record
+            if (existingRecord) return existingRecord; 
             
-            // If no record exists, create a frontend "Dummy" record to show as Pending
+          
             return {
                 _id: `pending-${emp._id}`,
                 employee: emp,
                 month: filterMonth,
                 presentDays: 0,
-                netPay: 0, // Showing 0 payout until officially rolled out
+                netPay: 0,
                 status: 'Pending',
                 adjustments: [],
-                isDummy: true, // Custom flag to modify UI buttons
+                isDummy: true, 
                 updatedAt: null
             };
         });
     } else {
-        // "All Periods" view strictly shows actual generated history records only
         baseList = salaries;
     }
 
@@ -506,7 +502,6 @@ const SalaryReport = () => {
   const viewData = useMemo(() => {
     if (filterMonth !== '') return filteredData; 
     
-    // Grouping logic for "All Periods"
     const groups = {};
     filteredData.forEach(item => {
         const empId = item.employee?._id;
@@ -526,7 +521,6 @@ const SalaryReport = () => {
     return { totalPayout, uniqueStaff, paidCount, totalRecords: filteredData.length };
   }, [filteredData]);
 
-  // Ensure current month is always present in dropdown options
   const availableMonths = [...new Set([...salaries.map(s => s.month), currentMonthStr])].sort().reverse();
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '-';
 
@@ -748,7 +742,7 @@ const SalaryReport = () => {
                                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border ${
                                             rec.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
                                             rec.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
-                                            rec.status === 'Pending' ? 'bg-slate-100 text-slate-600 border-slate-200' : // Handled pending status styling
+                                            rec.status === 'Pending' ? 'bg-slate-100 text-slate-600 border-slate-200' :
                                             'bg-amber-50 text-amber-700 border-amber-100'
                                         }`}>
                                             {rec.status}

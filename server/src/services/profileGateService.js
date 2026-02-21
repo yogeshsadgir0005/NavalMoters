@@ -1,12 +1,9 @@
-// services/profileGateService.js
 exports.checkProfileCompletion = (employee) => {
   const missing = [];
 
-  // minimum KYC
   if (!employee?.documents?.aadharCard) missing.push('Aadhar Card');
   if (!employee?.bankDetails?.accountNo || !employee?.bankDetails?.ifsc) missing.push('Bank Details');
 
-  // job assignment
   if (!employee?.department) missing.push('Department');
   if (!employee?.jobProfile) missing.push('Job Profile');
 

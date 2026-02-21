@@ -5,7 +5,6 @@ const { protect, restrictTo } = require('../middlewares/authMiddleware');
 
 router.post('/login', loginAdmin);
 
-// --- FIX: This line connects the Frontend "Create User" button to the Backend ---
 router.post('/register-hr', protect, restrictTo('ADMIN'), registerHR); 
 
 router.post('/otp-request', requestOtp);

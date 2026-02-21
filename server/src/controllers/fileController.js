@@ -2,7 +2,6 @@ const path = require("path");
 const fs = require("fs");
 const Employee = require("../models/Employee");
 
-// ✅ always resolves to /server/server/uploads no matter where nodemon runs
 const UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads");
 
 function safeName(name) {
@@ -31,12 +30,9 @@ exports.viewEmployeeFile = async (req, res) => {
     const employee = await Employee.findById(employeeId).lean();
     if (!employee) return res.status(404).json({ message: "Employee not found" });
 
-    // ✅ role check must match your DB roles (Admin/HR/Employee)
     const role = String(req.user?.role || "").toLowerCase();
 
     if (role === "employee") {
-      // If your User model has employeeProfile link, keep this.
-      // If not, tell me what field connects user->employee.
       const myEmpId = String(req.user.employeeProfile || "");
       if (String(employee._id) !== myEmpId) {
         return res.status(403).json({ message: "Forbidden" });

@@ -5,17 +5,17 @@ const User = require('../models/User');
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    // 1. Fetch ONLY Active Employees first
+  
     const activeEmployees = await Employee.find({ status: { $ne: 'Terminated' } })
       .select('_id firstName lastName email phone family bankDetails department jobProfile documents isProfileComplete');
 
-    // Create an array of active employee IDs to filter our counts
+   
     const activeEmpIds = activeEmployees.map(emp => String(emp._id));
     
-    // Total Staff: Exclude Terminated
+  
     const totalEmployees = activeEmployees.length;
     
-    // 2. Fetch Today's Logs specifically for Active Employees
+ 
     const today = new Date();
     today.setHours(0,0,0,0);
     const tomorrow = new Date(today);
@@ -24,9 +24,7 @@ exports.getDashboardStats = async (req, res) => {
     const todaysLogs = await Attendance.find({
       employee: { $in: activeEmpIds },
       date: { $gte: today, $lt: tomorrow }
-    }).sort({ createdAt: -1 }); // Sort by newest first to get the latest status if duplicates exist
-
-    // Deduplicate: Ensure each employee is only counted ONCE for today
+    }).sort({ createdAt: -1 });
     const uniqueAttendance = {};
     todaysLogs.forEach(log => {
         const empId = String(log.employee);
@@ -43,29 +41,23 @@ exports.getDashboardStats = async (req, res) => {
         if (status === 'Absent') absentToday++;
     });
 
-    // 3. Pending Docs: Smart Calculation
+   
     const pendingProfiles = activeEmployees.filter(emp => {
-        // If DB flag is already true, it's complete
-        if (emp.isProfileComplete) return false;
-
-        // Otherwise, run the "Strict Check"
-        const d = emp.documents || {};
+          if (emp.isProfileComplete) return false;
+      const d = emp.documents || {};
         const hasMandatoryDocs = d.photo && d.aadhar && d.pan && d.bankProof;
         
         const hasBasicInfo = emp.firstName && emp.lastName && emp.email && emp.phone;
         const hasJobInfo = emp.department && emp.jobProfile;
         const hasBankInfo = emp.bankDetails?.accountNo;
 
-        // If ALL criteria are met, it is NOT pending (return false)
-        if (hasBasicInfo && hasJobInfo && hasBankInfo && hasMandatoryDocs) {
+         if (hasBasicInfo && hasJobInfo && hasBankInfo && hasMandatoryDocs) {
             return false; 
         }
-        // Otherwise, it IS pending
-        return true; 
+          return true; 
     }).length;
     
-    // 4. Salary Pending
-    const currentMonth = new Date().toISOString().slice(0, 7); 
+     const currentMonth = new Date().toISOString().slice(0, 7); 
     const salaryPending = await Salary.countDocuments({
       month: currentMonth,
       status: 'Pending'

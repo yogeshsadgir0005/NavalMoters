@@ -89,27 +89,23 @@ const Personnel = () => {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // FRONTEND PROGRESS CALCULATOR (Strictly isolated from backend boolean flags)
   const calculateTrueProgress = (emp) => {
     let steps = 0;
     
-    // Step 1: Identity & Docs
     const d = emp.documents || {};
     if (emp.firstName && emp.phone && emp.bankDetails?.accountNo && d.photo && d.aadhar && d.pan && d.bankProof) {
         steps += 1;
     }
     
-    // Step 2: Family
     if (emp.family?.motherName && emp.family?.fatherName && emp.family?.maritalStatus) {
         steps += 1;
     }
     
-    // Step 3: Professional 
+  
     if (emp.department && emp.jobProfile && emp.baseSalary && emp.baseSalary > 0) {
         steps += 1;
     }
     
-    // Step 4: Past History (Only add step 4 if company string exists and isn't empty)
     if (emp.lastJob && emp.lastJob.company && emp.lastJob.company.trim() !== '') {
         steps += 1;
     }

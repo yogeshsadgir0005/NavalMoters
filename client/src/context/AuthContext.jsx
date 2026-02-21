@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(data));
     setUser(data);
     
-    // FIX: Dynamically route based on the role returned from the backend
     if (data.role === 'ADMIN' || data.role === 'HR') {
       navigate("/dashboard");
     } else {

@@ -31,7 +31,6 @@ router.post('/:id/increment', restrictTo('ADMIN', 'HR'), addSalaryIncrement);
 
 router.get('/:id', getEmployeeById);
 
-// FIX: Set large maxCount limits so multiple uploads are never restricted
 const uploadFields = upload.fields([
   { name: 'aadhar', maxCount: 1 },
   { name: 'pan', maxCount: 1 },
@@ -40,8 +39,8 @@ const uploadFields = upload.fields([
   { name: 'appHindi', maxCount: 1 },
   { name: 'appEnglish', maxCount: 1 },
   { name: 'bankProof', maxCount: 1 },
-  { name: 'certificates', maxCount: 20 }, // Increased
-  { name: 'otherKyc', maxCount: 20 },     // Increased
+  { name: 'certificates', maxCount: 20 }, 
+  { name: 'otherKyc', maxCount: 20 },     
 ]);
 
 router.patch('/:id/wizard', restrictTo('ADMIN', 'HR'), uploadFields, updateWizardStep);

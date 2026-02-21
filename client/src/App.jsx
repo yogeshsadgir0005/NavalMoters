@@ -10,7 +10,7 @@ import AdminUserManagement from './pages/AdminUserManagement';
 import MySpace from './pages/MySpace';
 import AttendanceLog from './pages/AttendanceLog';
 import SalaryReport from './pages/SalaryReport';
-import TerminatedEmployees from './pages/TerminatedEmployees'; // <-- NEW IMPORT
+import TerminatedEmployees from './pages/TerminatedEmployees';  
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, ready } = useAuth();

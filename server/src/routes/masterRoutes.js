@@ -13,7 +13,6 @@ router.get('/', protect, getAll);
 router.post('/department', protect, addDepartment);
 router.post('/job-profile', protect, addJobProfile);
 
-// NEW: Delete Routes
 router.delete('/department/:id', protect, deleteDepartment);
 router.delete('/job-profile/:id', protect, deleteJobProfile);
 

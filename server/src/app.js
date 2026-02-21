@@ -24,12 +24,11 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.options("*", cors()); // handle preflight
+app.options("*", cors());
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/employees', require('./routes/employeeRoutes'));

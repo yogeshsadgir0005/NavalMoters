@@ -3,8 +3,8 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
-  password: { type: String }, // Hashed Password
-  assignedPassword: { type: String }, // NEW: Plaintext stored for the Admin dashboard display
+  password: { type: String }, 
+  assignedPassword: { type: String },
   role: { type: String, enum: ['ADMIN', 'HR', 'EMPLOYEE'], default: 'EMPLOYEE' },
   employeeProfile: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
   hrPermissions: {
@@ -20,7 +20,7 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  if (!this.password) return false; // Prevent crash if access is revoked
+  if (!this.password) return false; 
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

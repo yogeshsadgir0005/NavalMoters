@@ -3,14 +3,11 @@ const Otp = require("../models/Otp");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-// -------------------- JWT --------------------
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
-// -------------------- OTP SETTINGS --------------------
 const OTP_EXPIRY_MINUTES = 5;
 
-// -------------------- LOGIN ADMIN (PASSWORD) --------------------
 exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -40,7 +37,6 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
-// -------------------- REGISTER HR (PASSWORD) --------------------
 exports.registerHR = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -60,7 +56,6 @@ exports.registerHR = async (req, res) => {
   }
 };
 
-// -------------------- REQUEST OTP --------------------
 exports.requestOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -68,14 +63,11 @@ exports.requestOtp = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found in the system" });
 
-    // generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // hash otp
     const salt = await bcrypt.genSalt(10);
     const otpHash = await bcrypt.hash(otp, salt);
 
-    // save OTP with expiry
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
     await Otp.create({
@@ -84,7 +76,6 @@ exports.requestOtp = async (req, res) => {
       expiresAt,
     });
 
-    // --- BREVO API HTTP REQUEST ---
     const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -95,7 +86,7 @@ exports.requestOtp = async (req, res) => {
       body: JSON.stringify({
         sender: {
           name: "Naval Motor Portal",
-          email: process.env.SMTP_EMAIL, // This MUST be the email you verified in Brevo
+          email: process.env.SMTP_EMAIL,  
         },
         to: [{ email: email }],
         subject: "Your Login Access Code",
@@ -129,17 +120,15 @@ exports.requestOtp = async (req, res) => {
   }
 };
 
-// -------------------- VERIFY OTP --------------------
+
 exports.verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    // get latest OTP
     const otpRecord = await Otp.findOne({ email }).sort({ createdAt: -1 });
 
     if (!otpRecord) return res.status(400).json({ message: "Invalid or expired OTP" });
 
-    // check expiry
     if (otpRecord.expiresAt && new Date() > new Date(otpRecord.expiresAt)) {
       await Otp.deleteMany({ email });
       return res.status(400).json({ message: "OTP expired. Please request a new one." });
@@ -151,7 +140,7 @@ exports.verifyOtp = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // clear OTPs after success
+   
     await Otp.deleteMany({ email });
 
     return res.json({
