@@ -28,7 +28,9 @@ app.options("*", cors());
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/employees', require('./routes/employeeRoutes'));
